@@ -147,21 +147,39 @@ pre.export{white-space:pre-wrap;background:var(--paars-licht);border-radius:12px
   .links{border-right:0;border-bottom:1px solid var(--lijn)}
   .stap .lab{min-width:0}
 }
-/* rekenmachine */
-.rm{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:calc(76px + env(safe-area-inset-bottom));width:290px;max-width:calc(100vw - 32px);background:#fff;border:3px solid var(--paars);border-radius:20px;box-shadow:0 14px 40px rgba(42,10,70,.3);z-index:40;padding:12px;touch-action:none}
+/* rekenmachine (examenmodel) */
+.rm{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:calc(76px + env(safe-area-inset-bottom));width:330px;max-width:calc(100vw - 24px);max-height:calc(100vh - 20px);overflow:auto;background:#555;border:1px solid #333;border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.35);z-index:40;touch-action:none;font-family:Arial,Helvetica,sans-serif}
 .rm[hidden]{display:none!important}
 @media (min-width:861px){.rm{right:auto;left:max(16px,env(safe-area-inset-left))}}
-.rm-kop{display:flex;align-items:center;gap:8px;cursor:move;margin-bottom:8px;font-weight:800;color:var(--paars);font-size:15px;user-select:none}
-.rm-kop button{margin-left:auto;border:0;background:var(--paars-licht);color:var(--paars);border-radius:50%;width:30px;height:30px;font-weight:800;cursor:pointer}
-.rm-scherm{background:var(--bg);border:2px solid var(--lijn);border-radius:12px;padding:6px 10px;text-align:right;margin-bottom:10px;min-height:72px}
-.rm-som{font-size:14px;color:var(--zacht);min-height:20px;word-break:break-all}
-.rm-uit{font-size:28px;font-weight:700;color:var(--tekst);word-break:break-all;font-variant-numeric:tabular-nums}
-.rm-toetsen{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
-.rm-toetsen button{border:0;border-radius:12px;padding:12px 0;font-size:19px;font-weight:700;cursor:pointer;background:var(--paars-licht);color:var(--tekst)}
-.rm-toetsen button.op{background:var(--cyaan-licht);color:var(--paars)}
-.rm-toetsen button.is{background:var(--roze);color:#fff}
-.rm-toetsen button.wis{background:#fdeced;color:var(--fout)}
-.rm-toetsen button:active{transform:scale(.96)}
+.rm-kop{display:flex;align-items:center;gap:10px;cursor:move;background:#fff;border-bottom:3px solid var(--paars);padding:8px 12px;border-radius:14px 14px 0 0;font-weight:700;color:var(--paars);font-size:20px;user-select:none;font-family:var(--font)}
+.rm-kop .pijlknop{margin-left:0;border:0;width:auto;height:auto;font-size:14px;padding:2px 6px}
+.rm.ingeklapt .rm-lijf{display:none}
+.rm-kop button{margin-left:auto;border:2px solid var(--paars);background:#fff;color:var(--paars);border-radius:4px;width:30px;height:30px;font-weight:800;font-size:16px;cursor:pointer;line-height:1}
+.rm-lijf{padding:10px 12px 14px}
+.rm-lcd{background:#e9e985;border:3px solid #333;border-radius:10px;height:112px;padding:6px 10px;display:flex;flex-direction:column;justify-content:space-between;color:#111;font-family:'Courier New',monospace;box-shadow:inset 0 2px 6px rgba(0,0,0,.25)}
+.rm-ind{display:flex;gap:10px;font-size:11px;font-weight:700;min-height:13px;font-family:Arial,sans-serif}
+.rm-in{font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:clip;direction:ltr}
+.rm-in .caret{display:inline-block;width:2px;height:20px;background:#111;vertical-align:middle;animation:knipper 1s steps(1) infinite}
+@keyframes knipper{50%{opacity:0}}
+.rm-uit{font-size:26px;font-weight:700;text-align:right;white-space:nowrap;overflow:hidden;display:flex;justify-content:flex-end;align-items:center;min-height:36px}
+.breuk{display:inline-flex;flex-direction:column;align-items:center;font-size:18px;line-height:1.05;vertical-align:middle;margin:0 2px}
+.breuk span:first-child{border-bottom:2px solid #111;padding:0 3px}
+.rm-in sup{font-size:12px}
+.rm-modus{display:flex;gap:18px;margin:8px 2px 6px;color:#fff;font-weight:700;font-size:16px}
+.rm-modus label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.rm-modus input{width:22px;height:22px;accent-color:#1e6cff;margin:0}
+.rm-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px 6px}
+.rm-lbl{font-size:10px;color:#f0a830;text-align:center;align-self:end;min-height:12px;font-weight:700}
+.rm-grid button{border:0;border-radius:4px;padding:8px 0;font-size:17px;font-weight:700;cursor:pointer;background:#ddd;color:#111;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25);font-family:'Times New Roman',serif}
+.rm-grid button:active{transform:translateY(1px);box-shadow:none}
+.rm-grid button.cijfer{background:#2a2a2a;color:#fff;font-size:24px;padding:6px 0;font-family:Arial,sans-serif}
+.rm-grid button.rood{background:#c0201e;color:#fff;font-family:Arial,sans-serif}
+.rm-grid button.blauw{background:#2f7dc0;color:#fff;font-size:24px}
+.rm-grid button.ans{background:#8a8a8a;color:#222;font-family:Arial,sans-serif}
+.rm-grid button.inv{background:#e39a12;color:#111;font-family:Arial,sans-serif}
+.rm-grid button.inv.aan{background:#ffcf4a;outline:3px solid #fff}
+.rm-grid button.sym{font-family:Arial,sans-serif}
+.rm-tussen{grid-column:1/-1;height:6px}
 .knop-klein.rm-knop{background:var(--cyaan);color:var(--paars)}
 @media (prefers-reduced-motion:reduce){.ov-stap{transition:none}}
 </style>
@@ -169,15 +187,28 @@ pre.export{white-space:pre-wrap;background:var(--paars-licht);border-radius:12px
 <body>
 <div class="app" id="app"></div>
 <div class="rm" id="rm" hidden role="dialog" aria-label="Rekenmachine">
-  <div class="rm-kop" id="rmKop">🧮 Rekenmachine<button id="rmSluit" aria-label="Rekenmachine sluiten">✕</button></div>
-  <div class="rm-scherm"><div class="rm-som" id="rmSom"></div><div class="rm-uit" id="rmUit" aria-live="polite">0</div></div>
-  <div class="rm-toetsen" id="rmToetsen">
-    <button class="wis" data-t="C">C</button><button class="op" data-t="(">(</button><button class="op" data-t=")">)</button><button class="op" data-t="÷">÷</button>
-    <button data-t="7">7</button><button data-t="8">8</button><button data-t="9">9</button><button class="op" data-t="×">×</button>
-    <button data-t="4">4</button><button data-t="5">5</button><button data-t="6">6</button><button class="op" data-t="−">−</button>
-    <button data-t="1">1</button><button data-t="2">2</button><button data-t="3">3</button><button class="op" data-t="+">+</button>
-    <button data-t="(−)" title="negatief getal">(−)</button><button data-t="0">0</button><button data-t=",">,</button><button class="is" data-t="=">=</button>
-    <button class="wis" data-t="⌫" style="grid-column:span 4;padding:8px 0;font-size:16px">⌫ wis laatste</button>
+  <div class="rm-kop" id="rmKop"><button class="pijlknop" id="rmKlap" aria-label="Rekenmachine inklappen" aria-expanded="true">▼</button>Rekenmachine<button id="rmSluit" aria-label="Rekenmachine sluiten">✕</button></div>
+  <div class="rm-lijf">
+    <div class="rm-lcd" id="rmLcd" tabindex="0" aria-label="Scherm van de rekenmachine">
+      <div class="rm-ind"><span id="rmIndInv"></span><span>D</span><span id="rmIndModus">Math</span></div>
+      <div class="rm-in" id="rmIn"></div>
+      <div class="rm-uit" id="rmUit" aria-live="polite"></div>
+    </div>
+    <div class="rm-modus" role="radiogroup" aria-label="Weergave">
+      <label><input type="radio" name="rmModus" value="math" checked>Mathematisch</label>
+      <label><input type="radio" name="rmModus" value="lin">Lineair</label>
+    </div>
+    <div class="rm-grid" id="rmToetsen">
+      <span class="rm-lbl">sin⁻¹</span><span class="rm-lbl">cos⁻¹</span><span class="rm-lbl">tan⁻¹</span><span class="rm-lbl"></span><span class="rm-lbl"></span>
+      <button data-t="sin">sin</button><button data-t="cos">cos</button><button data-t="tan">tan</button><button data-t="breuk" aria-label="breuk">▭<br style="line-height:0">▭</button><button data-t="e10" aria-label="keer tien tot de macht"><i>×10<sup>y</sup></i></button>
+      <button data-t="wortel" aria-label="wortel">√▢</button><button data-t="kw" aria-label="kwadraat"><i>x</i>²</button><button data-t="macht" aria-label="macht"><i>x</i><sup>▢</sup></button><button data-t="inv1" aria-label="één gedeeld door"><i>x</i>⁻¹</button><button data-t="pi" aria-label="pi">π</button>
+      <button class="inv" data-t="INV" id="rmInv">INV</button><button class="sym" data-t="links" aria-label="cursor naar links">◀</button><button class="sym" data-t="rechts" aria-label="cursor naar rechts">▶</button><button class="sym" data-t="haak" aria-label="haakje">( )</button><button class="sym" data-t="fd" aria-label="breuk of decimaal">f↔d</button>
+      <span class="rm-lbl"></span><span class="rm-lbl"></span><span class="rm-lbl"></span><span class="rm-lbl"></span><span class="rm-lbl">AC</span>
+      <button class="cijfer" data-t="7">7</button><button class="cijfer" data-t="8">8</button><button class="cijfer" data-t="9">9</button><button class="rood" data-t="DEL">DEL</button><button class="rood" data-t="C">C</button>
+      <button class="cijfer" data-t="4">4</button><button class="cijfer" data-t="5">5</button><button class="cijfer" data-t="6">6</button><button class="sym" data-t="×" style="font-size:24px">×</button><button class="sym" data-t="÷" style="font-size:24px">÷</button>
+      <button class="cijfer" data-t="1">1</button><button class="cijfer" data-t="2">2</button><button class="cijfer" data-t="3">3</button><button class="sym" data-t="+" style="font-size:24px">+</button><button class="sym" data-t="−" style="font-size:24px">−</button>
+      <button class="cijfer" data-t="0">0</button><button data-t="," style="font-size:22px">,</button><button class="sym" data-t="neg" aria-label="negatief">(−)</button><button class="ans" data-t="ANS">ANS</button><button class="blauw" data-t="=">=</button>
+    </div>
   </div>
 </div>
 <div class="overlay" id="overlay" hidden>
@@ -991,54 +1022,144 @@ async function opslaanSupabase(A, txt, detail){
 }
 
 /* =========================================================
-   REKENMACHINE
+   REKENMACHINE (examenmodel)
+   Tokens: getallen/tekens als array, met cursor.
    ========================================================= */
-let rmInvoer = '', rmKlaar = false;
-function rmToon(){
-  $('#rmSom').textContent = rmKlaar ? rmInvoer.split('=')[0] + '=' : '';
-  $('#rmUit').textContent = rmKlaar ? rmInvoer.split('=')[1] : (rmInvoer || '0');
-}
-function rmReken(){
-  try {
-    const expr = rmInvoer.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/,/g, '.');
-    const v = parseExpr(expr)({});
-    if (!isFinite(v)) throw new Error('deel');
-    const r = Math.round(v * 1e9) / 1e9;
-    rmInvoer = rmInvoer + '=' + String(r).replace('.', ',').replace('-', '−'); rmKlaar = true;
-  } catch (e) { $('#rmSom').textContent = rmInvoer; $('#rmUit').textContent = 'Fout'; return; }
-  rmToon();
+const RM = {tok: [], cur: 0, inv: false, ans: 0, uit: null, toonBreuk: true, modus: 'math', klaar: false, fout: ''};
+const RM_TONEN = {'sin(': 'sin(', 'cos(': 'cos(', 'tan(': 'tan(', 'asin(': 'sin⁻¹(', 'acos(': 'cos⁻¹(', 'atan(': 'tan⁻¹(', '√(': '√(', '^(': '^(', '×10^(': '×10^(',
+  '²': '²', '⁻¹': '⁻¹', 'π': 'π', 'Ans': 'Ans', '⁄': '⁄', 'neg': '−', '−': ' − ', '+': ' + ', '×': ' × ', '÷': ' ÷ ', '(': '(', ')': ')', ',': ','};
+function rmTekst(tokens){ return tokens.map(t => RM_TONEN[t] != null ? RM_TONEN[t] : t).join(''); }
+function rmInvoegen(t){
+  if (RM.klaar){
+    RM.klaar = false;
+    // verder rekenen met het antwoord als je met een bewerking begint
+    if (['+', '−', '×', '÷', '²', '⁻¹', '^(', '⁄', '×10^('].includes(t)){ RM.tok = ['Ans']; RM.cur = 1; }
+    else { RM.tok = []; RM.cur = 0; }
+  }
+  RM.tok.splice(RM.cur, 0, t); RM.cur++;
 }
 function rmToets(t){
-  if (rmKlaar){ const uit = rmInvoer.split('=')[1]; rmKlaar = false; rmInvoer = /[0-9,(]|\(−\)/.test(t) && t !== ')' ? '' : (uit === 'Fout' ? '' : uit); }
-  if (t === 'C') rmInvoer = '';
-  else if (t === '⌫') rmInvoer = rmInvoer.slice(0, -1);
-  else if (t === '=') { if (rmInvoer) return rmReken(); }
-  else if (t === '(−)') rmInvoer += '−';
-  else if ('+−×÷'.includes(t)) rmInvoer += t === '−' ? '−' : t;
-  else rmInvoer += t;
-  rmToon();
+  RM.fout = '';
+  const inv = RM.inv; if (t !== 'INV') RM.inv = false;
+  switch (t){
+    case 'INV': RM.inv = !RM.inv; break;
+    case 'C': if (inv){ RM.ans = 0; } RM.tok = []; RM.cur = 0; RM.uit = null; RM.klaar = false; break;
+    case 'DEL': if (RM.klaar){ RM.klaar = false; RM.cur = RM.tok.length; } if (RM.cur > 0){ RM.tok.splice(RM.cur - 1, 1); RM.cur--; } break;
+    case 'links': if (RM.klaar){ RM.klaar = false; RM.cur = RM.tok.length; } RM.cur = Math.max(0, RM.cur - 1); break;
+    case 'rechts': if (RM.klaar){ RM.klaar = false; RM.cur = 0; } else RM.cur = Math.min(RM.tok.length, RM.cur + 1); break;
+    case 'sin': case 'cos': case 'tan': rmInvoegen((inv ? 'a' : '') + t + '('); break;
+    case 'wortel': rmInvoegen('√('); break;
+    case 'kw': rmInvoegen('²'); break;
+    case 'macht': rmInvoegen('^('); break;
+    case 'inv1': rmInvoegen('⁻¹'); break;
+    case 'pi': rmInvoegen('π'); break;
+    case 'e10': rmInvoegen('×10^('); break;
+    case 'breuk': rmInvoegen('⁄'); break;
+    case 'neg': rmInvoegen('neg'); break;
+    case 'ANS': rmInvoegen('Ans'); break;
+    case 'haak': {
+      const voor = RM.klaar ? [] : RM.tok.slice(0, RM.cur);
+      const open = voor.filter(x => /\($/.test(x)).length - voor.filter(x => x === ')').length;
+      const laatste = voor[voor.length - 1];
+      const naGetal = laatste != null && (/^[0-9,]$/.test(laatste) || [')', 'π', 'Ans', '²', '⁻¹'].includes(laatste));
+      rmInvoegen(open > 0 && naGetal ? ')' : '('); break;
+    }
+    case 'fd': if (RM.uit != null) RM.toonBreuk = !RM.toonBreuk; break;
+    case '=': rmBereken(); break;
+    default: rmInvoegen(t);
+  }
+  rmTeken();
+}
+function rmParse(tokens){
+  // maak er een lijst van eenheden van: getallen samenvoegen
+  const L = []; let num = '';
+  const flush = () => { if (num){ if (!/^\d*,?\d+$|^\d+,$/.test(num)) throw new Error('Syntax'); L.push({t: 'n', v: parseFloat(num.replace(',', '.'))}); num = ''; } };
+  tokens.forEach(t => { if (/^[0-9,]$/.test(t)) num += t; else { flush(); L.push({t}); } });
+  flush();
+  let p = 0; const pk = () => L[p], neem = () => L[p++];
+  const isStart = x => x && (x.t === 'n' || x.t === 'π' || x.t === 'Ans' || x.t === '(' || /\($/.test(x.t) && x.t !== '^(' && x.t !== '×10^(' || x.t === 'neg');
+  function expr(){ let v = term(); while (pk() && (pk().t === '+' || pk().t === '−')){ const o = neem().t; const r = term(); v = o === '+' ? v + r : v - r; } return v; }
+  function term(){ let v = unair();
+    for (;;){ const x = pk(); if (!x) break;
+      if (x.t === '×' || x.t === '÷'){ p++; const r = unair(); if (x.t === '÷' && r === 0) throw new Error('Wiskundefout'); v = x.t === '×' ? v * r : v / r; }
+      else if (x.t === '×10^('){ p++; const e = expr(); sluit(); v = v * Math.pow(10, e); }
+      else if (isStart(x) && x.t !== 'neg'){ v = v * unair(); }   // impliciet keer, bv. 2π of 3(4)
+      else break; }
+    return v; }
+  function unair(){ if (pk() && pk().t === 'neg'){ p++; return -unair(); } return breuk(); }
+  function breuk(){ let v = macht(); while (pk() && pk().t === '⁄'){ p++; const r = macht(); if (r === 0) throw new Error('Wiskundefout'); v = v / r; } return v; }
+  function macht(){ let v = post(); if (pk() && pk().t === '^('){ p++; const e = expr(); sluit(); v = Math.pow(v, e); if (isNaN(v)) throw new Error('Wiskundefout'); } return v; }
+  function post(){ let v = prim(); while (pk() && (pk().t === '²' || pk().t === '⁻¹')){ const o = neem().t; if (o === '²') v = v * v; else { if (v === 0) throw new Error('Wiskundefout'); v = 1 / v; } } return v; }
+  function sluit(){ if (pk() && pk().t === ')') p++; /* een vergeten sluithaakje aan het eind mag */ else if (pk()) throw new Error('Syntax'); }
+  const RAD = Math.PI / 180;
+  function prim(){ const x = neem(); if (!x) throw new Error('Syntax');
+    if (x.t === 'n') return x.v;
+    if (x.t === 'π') return Math.PI;
+    if (x.t === 'Ans') return RM.ans;
+    if (x.t === '('){ const v = expr(); sluit(); return v; }
+    if (x.t === '√('){ const v = expr(); sluit(); if (v < 0) throw new Error('Wiskundefout'); return Math.sqrt(v); }
+    const f = {'sin(': v => Math.sin(v * RAD), 'cos(': v => Math.cos(v * RAD), 'tan(': v => Math.tan(v * RAD), 'asin(': v => Math.asin(v) / RAD, 'acos(': v => Math.acos(v) / RAD, 'atan(': v => Math.atan(v) / RAD}[x.t];
+    if (f){ const v = f(expr()); sluit(); if (isNaN(v)) throw new Error('Wiskundefout'); return Math.abs(v) < 1e-12 ? 0 : v; }
+    throw new Error('Syntax'); }
+  if (!L.length) throw new Error('leeg');
+  const v = expr(); if (p !== L.length) throw new Error('Syntax'); return v;
+}
+function rmBereken(){
+  if (!RM.tok.length) return;
+  try { const v = rmParse(RM.tok); if (!isFinite(v)) throw new Error('Wiskundefout'); RM.ans = Math.round(v * 1e12) / 1e12; RM.uit = RM.ans; RM.toonBreuk = true; RM.klaar = true; }
+  catch (e) { RM.fout = e.message === 'Wiskundefout' ? 'Wiskundefout' : 'Syntaxfout'; RM.uit = null; }
+}
+function rmBreuk(v){ // geeft [teller, noemer] als v een nette breuk is
+  if (Number.isInteger(v)) return null;
+  let h1 = 1, h0 = 0, k1 = 0, k0 = 1, x = Math.abs(v);
+  for (let i = 0; i < 20; i++){ const a = Math.floor(x); [h1, h0] = [a * h1 + h0, h1]; [k1, k0] = [a * k1 + k0, k1];
+    if (Math.abs(Math.abs(v) - h1 / k1) < 1e-10) return k1 <= 9999 ? [Math.sign(v) * h1, k1] : null; x = 1 / (x - a); if (!isFinite(x)) break; }
+  return null;
+}
+function rmGetal(v){ let s = String(+v.toPrecision(10)); if (s.includes('e')) s = v.toExponential(6); return s.replace('.', ',').replace(/^-/, '−').replace('e', '×10^'); }
+function rmTeken(){
+  const lin = RM.modus === 'lin';
+  $('#rmIndInv').textContent = RM.inv ? 'INV' : ''; $('#rmIndModus').textContent = lin ? 'Lin' : 'Math';
+  $('#rmInv').classList.toggle('aan', RM.inv);
+  const voor = esc(rmTekst(RM.tok.slice(0, RM.cur))), na = esc(rmTekst(RM.tok.slice(RM.cur)));
+  const fmtIn = t => lin ? t : t.replace(/²/g, '<sup>2</sup>').replace(/⁻¹/g, '<sup>−1</sup>');
+  $('#rmIn').innerHTML = fmtIn(voor) + (RM.klaar ? '' : '<span class="caret"></span>') + fmtIn(na);
+  const el = $('#rmUit');
+  if (RM.fout){ el.textContent = RM.fout; return; }
+  if (RM.uit == null){ el.textContent = ''; return; }
+  const b = RM.toonBreuk ? rmBreuk(RM.uit) : null;
+  if (b){ const neg = b[0] < 0 ? '−' : '';
+    el.innerHTML = lin ? `${neg}${Math.abs(b[0])}⌟${b[1]}` : `${neg}<span class="breuk"><span>${Math.abs(b[0])}</span><span>${b[1]}</span></span>`; }
+  else el.textContent = rmGetal(RM.uit);
+  // houd de cursor in beeld
+  const rin = $('#rmIn'); rin.scrollLeft = rin.scrollWidth;
 }
 function rmToggle(open){
-  const rm = $('#rm'); const nu2 = open == null ? rm.hidden : open; rm.hidden = !nu2;
-  const b = $('#rmOpen'); if (b) b.setAttribute('aria-pressed', nu2);
-  if (nu2){
+  const rm = $('#rm'); const aan = open == null ? rm.hidden : open; rm.hidden = !aan;
+  const b = $('#rmOpen'); if (b) b.setAttribute('aria-pressed', aan);
+  if (aan){
     const it = ITEMS[S.huidig]; if (it && !it.theorie){ const s = st(it.id); s.rekenmachine = (s.rekenmachine || 0) + 1; bewaar(); }
+    rmTeken(); $('#rmLcd').focus({preventScroll: true});
   }
 }
 $('#rmToetsen').addEventListener('click', e => { const b = e.target.closest('button'); if (b) rmToets(b.dataset.t); });
+document.querySelectorAll('input[name="rmModus"]').forEach(r => r.onchange = () => { RM.modus = r.value; rmTeken(); });
 $('#rmSluit').onclick = () => rmToggle(false);
+$('#rmKlap').onclick = () => { const rm = $('#rm'); const dicht = rm.classList.toggle('ingeklapt'); $('#rmKlap').textContent = dicht ? '▲' : '▼'; $('#rmKlap').setAttribute('aria-expanded', !dicht); };
 $('#rm').addEventListener('keydown', e => {
-  const map = {'*': '×', 'x': '×', '/': '÷', ':': '÷', '-': '−', '.': ',', 'Enter': '=', 'Backspace': '⌫', 'Escape': 'C'};
-  const t = map[e.key] || e.key;
-  if (/^[0-9+×÷−,()=⌫C]$/.test(t) || t === '⌫'){ e.preventDefault(); rmToets(t); }
+  if (e.target.matches('input')) return;
+  const map = {'*': '×', 'x': '×', '/': '÷', ':': '÷', '-': '−', '.': ',', ',': ',', '+': '+', 'Enter': '=', '=': '=', 'Backspace': 'DEL', 'Delete': 'C', 'Escape': 'C', 'ArrowLeft': 'links', 'ArrowRight': 'rechts', '(': 'haak', ')': 'haak', '^': 'macht'};
+  const t = /^[0-9]$/.test(e.key) ? e.key : map[e.key];
+  if (t){ e.preventDefault(); rmToets(t); }
 });
-// slepen
+// slepen aan de titelbalk
 (() => { const rm = $('#rm'), kop = $('#rmKop'); let dx, dy, sleep = false;
   kop.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; sleep = true; const r = rm.getBoundingClientRect(); dx = e.clientX - r.left; dy = e.clientY - r.top; kop.setPointerCapture(e.pointerId); });
-  kop.addEventListener('pointermove', e => { if (!sleep) return; const x = Math.min(Math.max(0, e.clientX - dx), innerWidth - rm.offsetWidth), y = Math.min(Math.max(0, e.clientY - dy), innerHeight - rm.offsetHeight);
+  kop.addEventListener('pointermove', e => { if (!sleep) return; const x = Math.min(Math.max(0, e.clientX - dx), innerWidth - rm.offsetWidth), y = Math.min(Math.max(0, e.clientY - dy), innerHeight - 60);
     rm.style.left = x + 'px'; rm.style.top = y + 'px'; rm.style.right = 'auto'; rm.style.bottom = 'auto'; });
   kop.addEventListener('pointerup', () => { sleep = false; });
 })();
+rmTeken();
 
 render();
 </script>
