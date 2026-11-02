@@ -162,7 +162,12 @@ pre.export{white-space:pre-wrap;background:var(--paars-licht);border-radius:12px
 .rm-lijf{padding:10px 12px 14px}
 .rm-lcd{background:#e9e985;border:3px solid #333;border-radius:10px;height:112px;padding:6px 10px;display:flex;flex-direction:column;justify-content:space-between;color:#111;font-family:'Courier New',monospace;box-shadow:inset 0 2px 6px rgba(0,0,0,.25)}
 .rm-ind{display:flex;gap:10px;font-size:11px;font-weight:700;min-height:13px;font-family:Arial,sans-serif}
-.rm-in{font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:clip;direction:ltr}
+.rm-in{font-size:19px;white-space:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;direction:ltr;cursor:text;min-height:26px;padding:2px 0}
+.rm-in::-webkit-scrollbar{display:none}
+.rm-in .tk{padding:0 0.5px}
+.rm-in .tk:hover{background:rgba(0,0,0,.08);border-radius:3px}
+.rm-uit.oud{opacity:.35}
+.rm-tip{font-size:11px;color:#ddd;margin-top:5px;font-family:var(--font)}
 .rm-in .caret{display:inline-block;width:2px;height:20px;background:#111;vertical-align:middle;animation:knipper 1s steps(1) infinite}
 @keyframes knipper{50%{opacity:0}}
 .rm-uit{font-size:26px;font-weight:700;text-align:right;white-space:nowrap;overflow:hidden;display:flex;justify-content:flex-end;align-items:center;min-height:36px}
@@ -204,6 +209,7 @@ pre.export{white-space:pre-wrap;background:var(--paars-licht);border-radius:12px
       <div class="rm-in" id="rmIn"></div>
       <div class="rm-uit" id="rmUit" aria-live="polite"></div>
     </div>
+    <div class="rm-tip">Getal veranderen? Tik in de som of gebruik ◀ ▶ en DEL. Druk daarna op =.</div>
     <div class="rm-modus" role="radiogroup" aria-label="Weergave">
       <label><input type="radio" name="rmModus" value="math" checked>Mathematisch</label>
       <label><input type="radio" name="rmModus" value="lin">Lineair</label>
@@ -1105,11 +1111,13 @@ async function opslaanSupabase(A, txt, detail){
 const RM = {tok: [], cur: 0, inv: false, ans: 0, uit: null, toonBreuk: true, modus: 'math', klaar: false, fout: ''};
 const RM_TONEN = {'sin(': 'sin(', 'cos(': 'cos(', 'tan(': 'tan(', 'asin(': 'sin⁻¹(', 'acos(': 'cos⁻¹(', 'atan(': 'tan⁻¹(', '√(': '√(', '^(': '^(', '×10^(': '×10^(',
   '²': '²', '⁻¹': '⁻¹', 'π': 'π', 'Ans': 'Ans', '⁄': '⁄', 'neg': '−', '−': ' − ', '+': ' + ', '×': ' × ', '÷': ' ÷ ', '(': '(', ')': ')', ',': ','};
-function rmTekst(tokens, voor){
+function rmDelen(tokens){
   return tokens.map((t, i) => {
-    if (t === '−'){ const v = i > 0 ? tokens[i - 1] : (voor || null); if (v == null || ['+', '−', '×', '÷', 'neg', '⁄'].includes(v) || /\($/.test(v)) return '−'; }
-    return RM_TONEN[t] != null ? RM_TONEN[t] : t; }).join('');
+    if (t === '−'){ const v = i > 0 ? tokens[i - 1] : null; if (v == null || ['+', '−', '×', '÷', 'neg', '⁄'].includes(v) || /\($/.test(v)) return '−'; }
+    return RM_TONEN[t] != null ? RM_TONEN[t] : t; });
 }
+function rmTekst(tokens){ return rmDelen(tokens).join(''); }
+function rmBewerk(pos){ RM.klaar = false; RM.oud = true; RM.cur = Math.max(0, Math.min(RM.tok.length, pos)); }
 function rmInvoegen(t){
   if (RM.klaar){
     RM.klaar = false;
@@ -1125,9 +1133,9 @@ function rmToets(t){
   switch (t){
     case 'INV': RM.inv = !RM.inv; break;
     case 'C': if (inv){ RM.ans = 0; } RM.tok = []; RM.cur = 0; RM.uit = null; RM.klaar = false; break;
-    case 'DEL': if (RM.klaar){ RM.klaar = false; RM.cur = RM.tok.length; } if (RM.cur > 0){ RM.tok.splice(RM.cur - 1, 1); RM.cur--; } break;
-    case 'links': if (RM.klaar){ RM.klaar = false; RM.cur = RM.tok.length; } RM.cur = Math.max(0, RM.cur - 1); break;
-    case 'rechts': if (RM.klaar){ RM.klaar = false; RM.cur = 0; } else RM.cur = Math.min(RM.tok.length, RM.cur + 1); break;
+    case 'DEL': if (RM.klaar) rmBewerk(RM.tok.length); if (RM.cur > 0){ RM.tok.splice(RM.cur - 1, 1); RM.cur--; } break;
+    case 'links': if (RM.klaar){ rmBewerk(RM.tok.length); break; } RM.cur = Math.max(0, RM.cur - 1); break;
+    case 'rechts': if (RM.klaar){ rmBewerk(0); break; } RM.cur = Math.min(RM.tok.length, RM.cur + 1); break;
     case 'sin': case 'cos': case 'tan': rmInvoegen((inv ? 'a' : '') + t + '('); break;
     case 'wortel': rmInvoegen('√('); break;
     case 'kw': rmInvoegen('²'); break;
@@ -1187,7 +1195,7 @@ function rmParse(tokens){
 }
 function rmBereken(){
   if (!RM.tok.length) return;
-  try { const v = rmParse(RM.tok); if (!isFinite(v)) throw new Error('Wiskundefout'); RM.ans = Math.round(v * 1e12) / 1e12; RM.uit = RM.ans; RM.toonBreuk = true; RM.klaar = true; }
+  try { const v = rmParse(RM.tok); if (!isFinite(v)) throw new Error('Wiskundefout'); RM.ans = Math.round(v * 1e12) / 1e12; RM.uit = RM.ans; RM.toonBreuk = true; RM.klaar = true; RM.oud = false; }
   catch (e) { RM.fout = e.message === 'Wiskundefout' ? 'Wiskundefout' : 'Syntaxfout'; RM.uit = null; }
 }
 function rmBreuk(v){ // geeft [teller, noemer] als v een nette breuk is
@@ -1202,9 +1210,12 @@ function rmTeken(){
   const lin = RM.modus === 'lin';
   $('#rmIndInv').textContent = RM.inv ? 'INV' : ''; $('#rmIndModus').textContent = lin ? 'Lin' : 'Math';
   $('#rmInv').classList.toggle('aan', RM.inv);
-  const voor = esc(rmTekst(RM.tok.slice(0, RM.cur))), na = esc(rmTekst(RM.tok.slice(RM.cur), RM.tok[RM.cur - 1]));
-  const fmtIn = t => lin ? t : t.replace(/²/g, '<sup>2</sup>').replace(/⁻¹/g, '<sup>−1</sup>');
-  $('#rmIn').innerHTML = fmtIn(voor) + (RM.klaar ? '' : '<span class="caret"></span>') + fmtIn(na);
+  const delen = rmDelen(RM.tok);
+  const fmtIn = t => lin ? esc(t) : esc(t).replace(/²/g, '<sup>2</sup>').replace(/⁻¹/g, '<sup>−1</sup>');
+  const caret = RM.klaar ? '' : '<span class="caret"></span>';
+  $('#rmIn').innerHTML = delen.map((d, i) => (i === RM.cur ? caret : '') + `<span class="tk" data-i="${i}">${fmtIn(d)}</span>`).join('') + (RM.cur >= delen.length ? caret : '');
+  const c = $('#rmIn .caret'); const rin = $('#rmIn'); if (c) rin.scrollLeft = Math.max(0, c.offsetLeft - rin.clientWidth + 30); else rin.scrollLeft = 0;
+  $('#rmUit').classList.toggle('oud', !!RM.oud);
   const el = $('#rmUit');
   if (RM.fout){ el.textContent = RM.fout; return; }
   if (RM.uit == null){ el.textContent = ''; return; }
@@ -1212,8 +1223,6 @@ function rmTeken(){
   if (b){ const neg = b[0] < 0 ? '−' : '';
     el.innerHTML = lin ? `${neg}${Math.abs(b[0])}⌟${b[1]}` : `${neg}<span class="breuk"><span>${Math.abs(b[0])}</span><span>${b[1]}</span></span>`; }
   else el.textContent = rmGetal(RM.uit);
-  // houd de cursor in beeld
-  const rin = $('#rmIn'); rin.scrollLeft = rin.scrollWidth;
 }
 function rmToggle(open){
   const rm = $('#rm'); const aan = open == null ? rm.hidden : open; rm.hidden = !aan;
@@ -1246,6 +1255,12 @@ function toonBerekeningen(it){
   const lijst = (S.items[it.id] && S.items[it.id].berekeningen) || [];
   vak.innerHTML = lijst.length ? '<span style="font-size:13px;color:var(--zacht);width:100%">Jouw berekeningen:</span>' + lijst.map(r => `<span class="berekening">${esc(r)}</span>`).join('') : '';
 }
+$('#rmIn').addEventListener('click', e => {
+  const tk = e.target.closest('.tk'); let pos = RM.tok.length;
+  if (tk){ const r = tk.getBoundingClientRect(); pos = +tk.dataset.i + (e.clientX > r.left + r.width / 2 ? 1 : 0); }
+  if (RM.klaar) rmBewerk(pos); else RM.cur = pos;
+  $('#rmMelding').textContent = ''; rmTeken();
+});
 $('#rmToetsen').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.t === 'kopieer') return rmKopieer(); $('#rmMelding').textContent = ''; rmToets(b.dataset.t); });
 document.querySelectorAll('input[name="rmModus"]').forEach(r => r.onchange = () => { RM.modus = r.value; rmTeken(); });
 $('#rmSluit').onclick = () => rmToggle(false);
