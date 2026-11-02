@@ -287,8 +287,36 @@ function maakGrafiek(cfg, opties = {}){
   (opties.punten || []).forEach(([px, py]) => { el('circle', {cx: X(px), cy: Y(py), r: 7, fill: '#5E0696'}); el('text', {x: X(px) + 10, y: Y(py) - 10, 'font-size': 14, 'font-weight': 700, fill: '#5E0696', 'font-family': 'Montserrat'}, `(${px}, ${py})`.replace(/-/g, '−')); });
   // interactief tekenen
   if (opties.interactief){
+    const snx = cfg.snapX || 1, sny = cfg.snapY || 1;
+    // fijne hulplijnen op de plekken waar een punt kan komen
+    if (sny < gs) for (let v = y0; v <= y1 + 1e-9; v += sny) el('line', {x1: X(x0), x2: X(x1), y1: Y(v), y2: Y(v), stroke: '#F1E8F8', 'stroke-width': 1, 'stroke-dasharray': '3 4'});
     const laag = document.createElementNS(ns, 'g'); svg.appendChild(laag);
-    const vang = el('rect', {x: m.l - 10, y: m.t - 10, width: W - m.l - m.r + 20, height: H - m.t - m.b + 20, fill: 'transparent', class: 'klik'});
+    const spook = document.createElementNS(ns, 'g'); spook.setAttribute('pointer-events', 'none'); spook.style.display = 'none'; svg.appendChild(spook);
+    spook.innerHTML = `<line class="hx" stroke="#45EDFF" stroke-width="2" stroke-dasharray="4 4"/><line class="hy" stroke="#45EDFF" stroke-width="2" stroke-dasharray="4 4"/><circle r="9" fill="none" stroke="#E924D5" stroke-width="3"/><rect rx="8" fill="#5E0696"/><text font-size="15" font-weight="700" fill="#fff" font-family="Montserrat"></text>`;
+    const vang = el('rect', {x: m.l - 14, y: m.t - 14, width: W - m.l - m.r + 28, height: H - m.t - m.b + 28, fill: 'transparent', class: 'klik'});
+    const naarPunt = ev => {
+      const pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
+      const q = pt.matrixTransform(svg.getScreenCTM().inverse());
+      const vx = x0 + (q.x - m.l) / (W - m.l - m.r) * (x1 - x0), vy = y0 + (H - m.b - q.y) / (H - m.t - m.b) * (y1 - y0);
+      const px = Math.round(Math.round(vx / snx) * snx * 100) / 100, py = Math.round(Math.round(vy / sny) * sny * 100) / 100;
+      if (px < x0 || px > x1 || py < y0 || py > y1) return null;
+      return [px, py];
+    };
+    const toonSpook = p => {
+      if (!p || (opties.slot && opties.slot())){ spook.style.display = 'none'; return; }
+      spook.style.display = '';
+      const [px, py] = p, cx = X(px), cy = Y(py);
+      const hx = spook.querySelector('.hx'), hy = spook.querySelector('.hy');
+      hx.setAttribute('x1', X(Math.min(Math.max(0, x0), x1))); hx.setAttribute('x2', cx); hx.setAttribute('y1', cy); hx.setAttribute('y2', cy);
+      hy.setAttribute('x1', cx); hy.setAttribute('x2', cx); hy.setAttribute('y1', Y(Math.min(Math.max(0, y0), y1))); hy.setAttribute('y2', cy);
+      spook.querySelector('circle').setAttribute('cx', cx); spook.querySelector('circle').setAttribute('cy', cy);
+      const t = spook.querySelector('text'); t.textContent = `(${px}, ${py})`.replace(/-/g, '−');
+      const bw = t.textContent.length * 9 + 14, bx = cx + 14 + bw > W ? cx - 14 - bw : cx + 14, by = cy - 40 < 0 ? cy + 12 : cy - 40;
+      const r = spook.querySelector('rect'); r.setAttribute('x', bx); r.setAttribute('y', by); r.setAttribute('width', bw); r.setAttribute('height', 28);
+      t.setAttribute('x', bx + 7); t.setAttribute('y', by + 19);
+    };
+    vang.addEventListener('pointermove', ev => toonSpook(naarPunt(ev)));
+    vang.addEventListener('pointerleave', () => toonSpook(null));
     const teken = () => {
       laag.innerHTML = '';
       const pts = opties.punt().slice().sort((a, b) => a[0] - b[0]);
@@ -298,20 +326,19 @@ function maakGrafiek(cfg, opties = {}){
         Object.entries({x1: X(a[0]), y1: Y(a[1]), x2: X(b[0]), y2: Y(b[1]), stroke: '#E924D5', 'stroke-width': 3.5, 'stroke-linecap': 'round'}).forEach(([k, v]) => ln.setAttribute(k, v));
         laag.appendChild(ln);
       }
-      pts.forEach(([px, py]) => { const c = document.createElementNS(ns, 'circle'); c.setAttribute('cx', X(px)); c.setAttribute('cy', Y(py)); c.setAttribute('r', 7); c.setAttribute('fill', opties.kleurPunt ? opties.kleurPunt(px, py) : '#5E0696'); laag.appendChild(c); });
+      pts.forEach(([px, py]) => { const c = document.createElementNS(ns, 'circle'); c.setAttribute('cx', X(px)); c.setAttribute('cy', Y(py)); c.setAttribute('r', 7); c.setAttribute('fill', opties.kleurPunt ? opties.kleurPunt(px, py) : '#5E0696'); laag.appendChild(c);
+        const t = document.createElementNS(ns, 'text'); t.setAttribute('x', X(px) + 10); t.setAttribute('y', Y(py) + 20); t.setAttribute('font-size', 12); t.setAttribute('font-weight', 700); t.setAttribute('fill', '#5E0696'); t.setAttribute('font-family', 'Montserrat'); t.textContent = `(${px}, ${py})`.replace(/-/g, '−'); laag.appendChild(t); });
     };
-    vang.addEventListener('click', ev => {
-      if (opties.slot && opties.slot()) return;
-      const r = svg.getBoundingClientRect(); const sx = (ev.clientX - r.left) / r.width * W, sy = (ev.clientY - r.top) / r.height * H;
-      const vx = x0 + (sx - m.l) / (W - m.l - m.r) * (x1 - x0), vy = y0 + (H - m.b - sy) / (H - m.t - m.b) * (y1 - y0);
-      const snx = cfg.snapX || 1, sny = cfg.snapY || 1;
-      const px = Math.round(Math.round(vx / snx) * snx * 100) / 100, py = Math.round(Math.round(vy / sny) * sny * 100) / 100;
-      if (px < x0 || px > x1 || py < y0 || py > y1) return;
+    const wissel = (px, py) => {
       const pts = opties.punt(); const i = pts.findIndex(p => p[0] === px && p[1] === py);
       if (i >= 0) pts.splice(i, 1); else pts.push([px, py]);
       teken(); opties.bijWijziging && opties.bijWijziging();
+    };
+    vang.addEventListener('click', ev => {
+      if (opties.slot && opties.slot()) return;
+      const p = naarPunt(ev); if (!p) return; wissel(p[0], p[1]); toonSpook(p);
     });
-    svg._teken = teken; teken();
+    svg._teken = teken; svg._wissel = wissel; svg._snap = [snx, sny]; teken();
   }
   return svg;
 }
@@ -375,7 +402,7 @@ const SECTIES = [
    hint: ['Een negatieve tijd is een tijd vóór 9:00 uur.'], uitleg: ['tijd = 0 is 9:00 uur', 'tijd = −1 is 8:59 uur', 'tijd = −3 is drie minuten vóór negen: 8:57 uur']},
   {id: '20b', nr: '20', deel: 'b', ctx: 'c20', dom: D4, vraag: ['Vul de tabel bij de formule in.'], type: 'tabel', kop: ['tijd in minuten', 'aantal liters'], xs: [-3, -2, -1, 0, 1, 2], ans: [10, 20, 30, 40, 50, 60], gegeven: [3],
    hint: ['Vul tijd = −1 in: −1 × 10 + 40 = …', '−1 × 10 = −10'], uitleg: ['tijd = −3: −3 × 10 + 40 = −30 + 40 = 10', 'tijd = −2: −20 + 40 = 20', 'tijd = −1: −10 + 40 = 30'], fouten: {}},
-  {id: '20c', nr: '20', deel: 'c', ctx: 'c20', dom: D4v, vraag: ['Teken de grafiek die hoort bij de tabellen uit opdracht 19c en opdracht 20b in het assenstelsel.', 'Klik op minstens twee punten uit de tabellen.', 'Klik nog een keer op een punt om het weg te halen.'], type: 'grafiek', g: G20, f: t => 10 * t + 40, min: 3,
+  {id: '20c', nr: '20', deel: 'c', ctx: 'c20', dom: D4v, vraag: ['Teken de grafiek die hoort bij de tabellen uit opdracht 19c en opdracht 20b in het assenstelsel.', 'Klik op minstens twee punten uit de tabellen.', 'Klik nog een keer op een punt om het weg te halen.'], type: 'grafiek', g: G20, f: t => 10 * t + 40, min: 2,
    hint: ['Gebruik de punten uit de tabellen, bijvoorbeeld (0, 40) en (2, 60).', 'Zet ook een punt bij tijd = −3: (−3, 10).'], uitleg: ['Punt (−3, 10)', 'Punt (0, 40)', 'Punt (5, 90)', 'Trek een rechte lijn door de punten.']},
   {id: '20d', nr: '20', deel: 'd', ctx: 'c20', dom: D4v, vraag: ['Hoe laat is Harm begonnen met het vullen van het bad?'], type: 'tijd', ans: '8:56', graf: () => maakGrafiek(G20, {lijnen: [{f: t => 10 * t + 40}]}),
    hint: ['Het bad was leeg: aantal liters = 0.', 'Bij welke tijd raakt de grafiek de horizontale as?'], uitleg: ['Aantal liters = 0 bij tijd = −4', 'tijd = −4 is 4 minuten vóór 9:00 uur', 'Harm is om 8:56 uur begonnen.'], fouten: {'9:04': 'Negatieve tijd als ná 9:00 gelezen', '8:54': 'Afleesfout op de horizontale as'}},
@@ -573,8 +600,25 @@ function toonVraag(it){
     const svg = maakGrafiek(it.g, {interactief: true, punt: () => s.invoer, slot: () => s.opgelost, bijWijziging: bewaar,
       kleurPunt: (x, y) => s.opgelost ? '#16965A' : '#5E0696'});
     links.appendChild(svg);
-    links.insertAdjacentHTML('beforeend', `<div class="graf-uitleg">Klik op een roosterpunt om een punt te zetten. De lijn verschijnt vanzelf.</div><button class="knop licht" id="wis">Alles wissen</button>`);
+    links.insertAdjacentHTML('beforeend', `<div class="graf-uitleg">Beweeg over het rooster: je ziet waar je punt komt. Klik om het punt te zetten. Klik er nog een keer op om het weg te halen.</div>
+      <div class="antw-rij" style="justify-content:center;margin:0"><span>Of typ een punt:</span>
+        <label for="px">${esc(it.g.lx.split(' ')[0])} =</label><input class="inv" id="px" inputmode="decimal" style="width:80px" autocomplete="off">
+        <label for="py">${esc(it.g.ly.split(' ')[0] === 'aantal' ? 'liters' : it.g.ly.split(' ')[0])} =</label><input class="inv" id="py" inputmode="decimal" style="width:80px" autocomplete="off">
+        <button class="knop paars" id="zetPunt">Zet punt</button></div>
+      <div class="graf-uitleg" id="puntMelding" role="status"></div>
+      <button class="knop licht" id="wis">Alles wissen</button>`);
     $('#wis').onclick = () => { if (s.opgelost) return; s.invoer.length = 0; svg._teken(); bewaar(); };
+    const zet = () => {
+      if (s.opgelost) return;
+      const x = parseNum($('#px').value), y = parseNum($('#py').value), g = it.g, [snx, sny] = svg._snap, mld = $('#puntMelding');
+      if (isNaN(x) || isNaN(y)){ mld.textContent = 'Vul bij allebei een getal in.'; return; }
+      if (x < g.x[0] || x > g.x[1] || y < g.y[0] || y > g.y[1]){ mld.textContent = 'Dat punt valt buiten het assenstelsel.'; return; }
+      if (Math.abs(x / snx - Math.round(x / snx)) > 1e-9 || Math.abs(y / sny - Math.round(y / sny)) > 1e-9){ mld.textContent = `Kies een punt op het rooster (stappen van ${snx} en ${sny}).`; return; }
+      if (s.invoer.some(p => p[0] === x && p[1] === y)){ mld.textContent = 'Dat punt staat er al.'; return; }
+      svg._wissel(x, y); mld.textContent = `Punt (${x}, ${y}) gezet.`.replace(/-/g, '−'); $('#px').value = ''; $('#py').value = ''; $('#px').focus();
+    };
+    $('#zetPunt').onclick = zet;
+    $('#py').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); zet(); } });
   } else if (it.graf){ links.appendChild(it.graf()); }
   else if (ctx.graf){ links.appendChild(ctx.graf()); }
   else { links.innerHTML = ctx.links(); }
