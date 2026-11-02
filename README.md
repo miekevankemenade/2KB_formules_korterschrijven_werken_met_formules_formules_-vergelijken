@@ -62,13 +62,21 @@ De anon-sleutel mag openbaar zijn. Door de beveiliging in `supabase.sql` mogen l
 
 ## Stap 3 – Docentaccount maken
 
-1. Ga in Supabase naar **Authentication** → **Users** → **Add user** → **Create new user**.
-2. Vul je e-mailadres en een wachtwoord in. Zet **Auto Confirm User** aan.
-3. Ga naar **Authentication** → **Sign In / Providers**. Zet **Allow new users to sign up** uit.
-   Zo kan niemand anders een account maken en de resultaten lezen.
-4. Log in op `docent.html`.
-   Je ziet daar per leerling het cijfer, de score, de gokkans en de foutenanalyse.
-   Met de knop **Kopieer als tabel** plak je alles in Excel.
+1. Open `docent.html`.
+2. Vul je e-mailadres en een nieuw wachtwoord in, minstens 8 tekens.
+3. Klik op **Account aanmaken (eerste keer)**.
+4. Klik op de link in de e-mail die je krijgt.
+5. Log daarna in met **Inloggen**.
+
+Alleen e-mailadressen in de tabel `docenten` kunnen de resultaten zien.
+Een collega toevoegen? Voeg in Supabase (Table Editor → docenten) een rij toe met zijn of haar e-mailadres.
+
+## Verder werken in een volgende les
+
+Elke leerling krijgt bij de start een persoonlijke code, bijvoorbeeld `QZ7W-M7CT`.
+- De voortgang wordt automatisch online bewaard na elke opdracht.
+- In de volgende les kiest de leerling **Ik ga verder met mijn code**. Dat werkt ook op een andere computer.
+- Is een leerling zijn code kwijt? Op `docent.html` staat bij **Codes en voortgang** de code van elke leerling.
 
 ## Werkt het zonder Supabase?
 

@@ -140,6 +140,10 @@ footer .spacer{flex:1}
 .analyse li{margin:4px 0}
 pre.export{white-space:pre-wrap;background:var(--paars-licht);border-radius:12px;padding:14px;font-size:14px;max-height:280px;overflow:auto}
 .status{font-size:14px;font-weight:600;margin-top:8px}
+.code{font-family:'Courier New',monospace;font-size:20px;letter-spacing:2px;color:var(--roze)}
+.code-groot{font-family:'Courier New',monospace;font-size:44px;font-weight:700;letter-spacing:6px;color:var(--paars);background:var(--cyaan-licht);border-radius:14px;text-align:center;padding:16px;margin:12px 0}
+.startkeuze{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.startkeuze[hidden]{display:none!important}
 @media (max-width:860px){
   main{grid-template-columns:1fr;grid-template-rows:auto auto}
   .app{height:auto;min-height:100vh}
@@ -590,8 +594,29 @@ const VRAGEN = ITEMS.filter(i => !i.theorie);
    ========================================================= */
 const OPSLAG = 'formules-h2-v1';
 let S = laad() || {naam: '', klas: '', start: new Date().toISOString(), huidig: 0, items: {}, gestart: false, klaar: false};
+// bij het openen altijd eerst het startscherm: zo gaat op een gedeelde computer niemand per ongeluk verder in het werk van een ander
+S.gestart = false;
 function laad(){ try { return JSON.parse(localStorage.getItem(OPSLAG)); } catch (e) { return null; } }
-function bewaar(){ try { localStorage.setItem(OPSLAG, JSON.stringify(S)); } catch (e) {} }
+function bewaar(){ try { localStorage.setItem(OPSLAG, JSON.stringify(S)); } catch (e) {} wolkLater(); }
+/* ---------- online opslaan met een persoonlijke code ---------- */
+let DB = null;
+function db(){ const c = window.APP_CONFIG || {}; if (!DB && c.SUPABASE_URL && c.SUPABASE_ANON_KEY && window.supabase) DB = window.supabase.createClient(c.SUPABASE_URL, c.SUPABASE_ANON_KEY); return DB; }
+function nieuweCode(){
+  const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; const r = new Uint32Array(8); crypto.getRandomValues(r);
+  const t = Array.from(r, x => abc[x % abc.length]).join(''); return t.slice(0, 4) + '-' + t.slice(4);
+}
+function normCode(c){ const t = String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); return t.length === 8 ? t.slice(0, 4) + '-' + t.slice(4) : ''; }
+let wolkTimer = null, wolkStatus = '';
+function zetWolkStatus(t){ wolkStatus = t; const e = document.getElementById('wolk'); if (e) e.textContent = t; }
+function wolkLater(){ if (!S.code || !db()) return; clearTimeout(wolkTimer); zetWolkStatus('Opslaan…'); wolkTimer = setTimeout(wolkNu, 1200); }
+async function wolkNu(){
+  clearTimeout(wolkTimer); if (!S.code || !db()) return;
+  try {
+    const {error} = await db().rpc('voortgang_opslaan', {p_code: S.code, p_leerling: S.naam || 'onbekend', p_klas: S.klas || null, p_data: S});
+    if (error) throw error; zetWolkStatus('✓ Opgeslagen');
+  } catch (e) { zetWolkStatus('⚠ Niet opgeslagen (geen internet?)'); }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') wolkNu(); });
 function st(id){ if (!S.items[id]) S.items[id] = {pogingen: [], hint: 0, opgelost: false, punten: null, tijd: 0, gezien: null, laatste: null, hulpGetoond: false, invoer: null}; return S.items[id]; }
 function puntenVan(s){ if (!s.opgelost) return 0; const fouten = s.pogingen.filter(p => !p.goed).length; if (fouten === 0 && !s.hint) return 2; if (fouten <= 1) return 1; return 0; }
 
@@ -601,6 +626,7 @@ function puntenVan(s){ if (!s.opgelost) return 0; const fouten = s.pogingen.filt
 const app = $('#app');
 function render(){
   if (!S.gestart) return startScherm();
+  if (!S.code && db()){ S.code = nieuweCode(); bewaar(); }
   if (S.klaar) return eindScherm();
   const it = ITEMS[S.huidig];
   const sec = SECTIES.find(s => s.id === it.sectie);
@@ -608,7 +634,7 @@ function render(){
   <header>
     <h1>H2 Formules</h1>
     <nav class="tabs" aria-label="Paragrafen">${SECTIES.map(s => `<button class="tab ${s.id === sec.id ? 'actief' : ''}" data-sec="${s.id}">${esc(s.titel)}</button>`).join('')}</nav>
-    <div class="kop-rechts"><button class="knop-klein rm-knop" id="rmOpen" aria-pressed="${!$('#rm').hidden}">🧮 Rekenmachine</button><span class="naam">${esc(S.naam)}</span><button class="knop-klein" id="naarEind">Afronden</button></div>
+    <div class="kop-rechts"><button class="knop-klein rm-knop" id="rmOpen" aria-pressed="${!$('#rm').hidden}">🧮 Rekenmachine</button><span class="naam">${esc(S.naam)}</span>${S.code ? `<button class="knop-klein" id="codeKnop" style="background:rgba(255,255,255,.15)" title="Jouw code om later verder te gaan">Code: ${esc(S.code)}</button><span id="wolk" style="font-size:12px;opacity:.85">${esc(wolkStatus)}</span>` : ''}<button class="knop-klein" id="naarEind">Afronden</button></div>
   </header>
   <div>
     <div class="strook" id="strook">${sec.items.map(i => {
@@ -633,6 +659,7 @@ function render(){
   $('#volgende').onclick = () => S.huidig === ITEMS.length - 1 ? afronden() : ga(S.huidig + 1);
   $('#naarEind').onclick = afronden;
   $('#rmOpen').onclick = () => rmToggle();
+  const ck = $('#codeKnop'); if (ck) ck.onclick = () => toonCode(false);
   const cur = app.querySelector('.stip.huidig'); if (cur) cur.scrollIntoView({block: 'nearest', inline: 'center'});
   it.theorie ? toonTheorie(it) : toonVraag(it);
 }
@@ -888,20 +915,60 @@ $('#ovSluit').onclick = () => { $('#overlay').hidden = true; };
    START- EN EINDSCHERM
    ========================================================= */
 function startScherm(){
+  const online = !!db();
+  const terug = S.naam && Object.keys(S.items).length;
   app.innerHTML = `<div class="scherm" style="grid-row:1/-1">
     <span class="label-domein">VMBO Basis · Hoofdstuk 2 Formules</span>
     <h2>Werken met formules</h2>
     <p>In deze app oefen je met:<br>• negatieve getallen invullen in formules<br>• formules korter schrijven<br>• formule, tabel en grafiek<br>• gelijkwaardige formules</p>
-    <p>Bij elke theorie hoort een filmpje.<br>Bij elke opdracht kun je een hint vragen.</p>
-    <div class="witregel"></div>
-    <div class="antw-rij"><label for="naam" style="min-width:150px">Je naam of leerlingnummer:</label><input class="inv breed" id="naam" autocomplete="name" value="${esc(S.naam)}"></div>
-    <div class="antw-rij"><label for="klas" style="min-width:150px">Je klas:</label><input class="inv" id="klas" value="${esc(S.klas)}"></div>
-    <div class="feedback" id="fbStart"></div>
-    <div class="knoppen"><button class="knop hoofd" id="begin">Beginnen</button>${Object.keys(S.items).length ? '<button class="knop licht" id="opnieuw">Helemaal opnieuw beginnen</button>' : ''}</div>
+    ${terug ? `<div class="analyse"><b>Welkom terug, ${esc(S.naam)}!</b><br>Je hebt al ${VRAGEN.filter(v => S.items[v.id] && S.items[v.id].opgelost).length} opdrachten af.${S.code ? `<br>Jouw code: <b class="code">${esc(S.code)}</b>` : ''}
+      <div class="knoppen"><button class="knop hoofd" id="verderHier">Verder gaan</button><button class="knop licht" id="andere">Ik ben iemand anders</button></div></div>` : ''}
+    <div class="startkeuze" ${terug ? 'hidden' : ''} id="startkeuze">
+      <div class="analyse">
+        <b>Ik begin voor het eerst</b>
+        <div class="antw-rij"><label for="naam" style="min-width:150px">Je naam:</label><input class="inv breed" id="naam" autocomplete="name"></div>
+        <div class="antw-rij"><label for="klas" style="min-width:150px">Je klas:</label><input class="inv" id="klas"></div>
+        <div class="feedback" id="fbStart"></div>
+        <div class="knoppen"><button class="knop hoofd" id="begin">Beginnen</button></div>
+      </div>
+      <div class="analyse">
+        <b>Ik ga verder met mijn code</b>
+        ${online ? `<div class="antw-rij"><label for="codeIn" style="min-width:150px">Jouw code:</label><input class="inv" id="codeIn" placeholder="ABCD-2345" autocomplete="off" spellcheck="false" style="text-transform:uppercase;letter-spacing:2px"></div>
+        <div class="feedback" id="fbCode"></div>
+        <div class="knoppen"><button class="knop paars" id="laadCode">Verder werken</button></div>` : '<p>Online opslaan staat uit. Je werk wordt alleen op deze computer bewaard.</p>'}
+      </div>
+    </div>
   </div>`;
-  $('#begin').onclick = () => { const n = $('#naam').value.trim(); if (!n){ const f = $('#fbStart'); f.className = 'feedback fout'; f.textContent = 'Vul eerst je naam of leerlingnummer in.'; return; }
-    S.naam = n; S.klas = $('#klas').value.trim(); S.gestart = true; bewaar(); render(); };
-  const o = $('#opnieuw'); if (o) o.onclick = () => { S = {naam: '', klas: '', start: new Date().toISOString(), huidig: 0, items: {}, gestart: false, klaar: false}; bewaar(); render(); };
+  const vh = $('#verderHier'); if (vh) vh.onclick = () => { S.gestart = true; if (!S.code && online){ S.code = nieuweCode(); bewaar(); return toonCode(true); } bewaar(); render(); };
+  const an = $('#andere'); if (an) an.onclick = () => { wolkNu(); S = {naam: '', klas: '', start: new Date().toISOString(), huidig: 0, items: {}, gestart: false, klaar: false}; try { localStorage.removeItem(OPSLAG); } catch (e) {} render(); };
+  $('#begin').onclick = () => { const n = $('#naam').value.trim(); if (!n){ const f = $('#fbStart'); f.className = 'feedback fout'; f.textContent = 'Vul eerst je naam in.'; return; }
+    S = {naam: n, klas: $('#klas').value.trim(), start: new Date().toISOString(), huidig: 0, items: {}, gestart: true, klaar: false, code: online ? nieuweCode() : null};
+    bewaar(); online ? toonCode(true) : render(); };
+  const lc = $('#laadCode');
+  if (lc){
+    const laad = async () => {
+      const f = $('#fbCode'); const code = normCode($('#codeIn').value);
+      if (!code){ f.className = 'feedback fout'; f.textContent = 'Een code heeft 8 tekens, bijvoorbeeld ABCD-2345.'; return; }
+      f.className = 'feedback info'; f.textContent = 'Bezig met laden…';
+      try {
+        const {data, error} = await db().rpc('voortgang_laden', {p_code: code});
+        if (error) throw error;
+        if (!data){ f.className = 'feedback fout'; f.textContent = 'Deze code bestaat niet. Kijk goed of je hem goed hebt overgeschreven, of vraag je docent.'; return; }
+        S = Object.assign({items: {}, huidig: 0}, data.data, {code, gestart: true, klaar: false}); bewaar(); render();
+      } catch (e) { f.className = 'feedback fout'; f.textContent = 'Laden lukt niet. Heb je internet?'; }
+    };
+    lc.onclick = laad; $('#codeIn').addEventListener('keydown', e => { if (e.key === 'Enter') laad(); });
+  }
+}
+function toonCode(nieuw){
+  const ov = $('#overlay'); $('#ovTitel').textContent = nieuw ? 'Schrijf je code op!' : 'Jouw code';
+  $('#ovInhoud').innerHTML = `<p>Met deze code kun je de volgende les verder waar je gebleven was, ook op een andere computer.</p>
+    <div class="code-groot">${esc(S.code)}</div>
+    <p>Schrijf hem in je agenda of schrift.<br>Je docent kan je code ook opzoeken als je hem kwijt bent.</p>`;
+  $('#ovSluit').textContent = nieuw ? 'Ik heb mijn code opgeschreven' : 'Sluiten';
+  ov.hidden = false;
+  $('#ovSluit').onclick = () => { ov.hidden = true; $('#ovSluit').textContent = 'Ik snap het, ik probeer het zelf'; $('#ovTitel').textContent = 'Stap voor stap'; $('#ovSluit').onclick = () => { $('#overlay').hidden = true; }; render(); };
+  $('#ovSluit').focus();
 }
 
 function analyse(){
@@ -1011,7 +1078,7 @@ async function opslaanSupabase(A, txt, detail){
   el.textContent = 'Resultaten worden opgeslagen…';
   try {
     const db = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
-    const rij = {leerling: S.naam, klas: S.klas || null, module: cfg.MODULE || null, cijfer: A.cijfer, score: A.behaald, totaal: A.totaal, gokkans: A.gok, samenvatting: A.tip, export_tekst: txt, details: detail, sessie_start: S.start};
+    const rij = {leerling: S.naam, klas: S.klas || null, module: cfg.MODULE || null, cijfer: A.cijfer, score: A.behaald, totaal: A.totaal, gokkans: A.gok, samenvatting: A.tip, export_tekst: txt, details: detail, sessie_start: S.start, code: S.code || null};
     const {error} = await db.from(cfg.TABEL || 'resultaten').insert(rij);
     if (error) throw error;
     S.opgeslagen = sleutel; bewaar();
