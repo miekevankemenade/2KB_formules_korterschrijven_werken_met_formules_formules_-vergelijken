@@ -184,6 +184,12 @@ pre.export{white-space:pre-wrap;background:var(--paars-licht);border-radius:12px
 .rm-grid button.inv.aan{background:#ffcf4a;outline:3px solid #fff}
 .rm-grid button.sym{font-family:Arial,sans-serif}
 .rm-tussen{grid-column:1/-1;height:6px}
+@media (max-width:520px),(max-height:820px){.rm{width:280px}.rm-kop{font-size:16px;padding:6px 10px}.rm-lijf{padding:8px 10px 10px}.rm-lcd{height:88px}.rm-in{font-size:16px}.rm-uit{font-size:21px;min-height:28px}.rm-modus{font-size:13px;margin:5px 2px 3px}.rm-modus input{width:16px;height:16px}.rm-grid{gap:5px 5px}.rm-grid button{padding:5px 0;font-size:14px}.rm-grid button.cijfer,.rm-grid button.blauw{font-size:19px;padding:4px 0}.rm-lbl{font-size:9px;min-height:10px}}
+.rm-grid button.kopieer{grid-column:1/-1;background:#fff;color:var(--paars);font-family:var(--font);font-size:15px;padding:9px 0;margin-top:4px}
+.rm-melding{color:#fff;font-size:13px;min-height:18px;margin-top:6px;font-family:var(--font)}
+.berekeningen{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.berekening{font-family:'Courier New',monospace;font-size:14px;background:#fff;border:2px solid var(--lijn);border-radius:6px;padding:3px 8px}
+.rm{cursor:move}.rm button,.rm input,.rm label,.rm-lcd{cursor:pointer}.rm-lcd{cursor:text}
 .knop-klein.rm-knop{background:var(--cyaan);color:var(--paars)}
 @media (prefers-reduced-motion:reduce){.ov-stap{transition:none}}
 </style>
@@ -212,7 +218,9 @@ pre.export{white-space:pre-wrap;background:var(--paars-licht);border-radius:12px
       <button class="cijfer" data-t="4">4</button><button class="cijfer" data-t="5">5</button><button class="cijfer" data-t="6">6</button><button class="sym" data-t="×" style="font-size:24px">×</button><button class="sym" data-t="÷" style="font-size:24px">÷</button>
       <button class="cijfer" data-t="1">1</button><button class="cijfer" data-t="2">2</button><button class="cijfer" data-t="3">3</button><button class="sym" data-t="+" style="font-size:24px">+</button><button class="sym" data-t="−" style="font-size:24px">−</button>
       <button class="cijfer" data-t="0">0</button><button data-t="," style="font-size:22px">,</button><button class="sym" data-t="neg" aria-label="negatief">(−)</button><button class="ans" data-t="ANS">ANS</button><button class="blauw" data-t="=">=</button>
+      <button class="kopieer" data-t="kopieer" id="rmKopieer" title="Zet de berekening en het antwoord in het antwoordvak">⧉ Kopieer naar antwoordvak</button>
     </div>
+    <div class="rm-melding" id="rmMelding" role="status"></div>
   </div>
 </div>
 <div class="overlay" id="overlay" hidden>
@@ -695,6 +703,7 @@ function toonVraag(it){
      </div>
      <div class="hintvak" id="hintvak"></div>
      <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+     <div class="berekeningen" id="berekeningen"></div>
      <div class="pogingen" id="pogingen"></div>
    </section>`;
   // linkerkant
@@ -761,6 +770,7 @@ function toonVraag(it){
   $('#hintKnop').onclick = () => toonHint(it);
   inv.querySelectorAll('input').forEach(i => i.addEventListener('keydown', e => { if (e.key === 'Enter') controleer(it); }));
   toonStatus(it);
+  toonBerekeningen(it);
 }
 
 function herstelInvoer(it, s){
@@ -1056,7 +1066,7 @@ function eindScherm(){
     catch (e) { const r = document.createRange(); r.selectNodeContents($('#exportTxt')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); $('#status').textContent = 'Kopiëren lukte niet automatisch. De tekst is geselecteerd: druk op Ctrl+C.'; }
   };
   const json = () => JSON.stringify({leerling: S.naam, klas: S.klas, module: cfg.MODULE, datum: new Date().toISOString(), cijfer: A.cijfer, score: A.behaald, totaal: A.totaal, gokkans: A.gok, tip: A.tip,
-    vragen: VRAGEN.map(v => { const s = S.items[v.id] || {pogingen: []}; return {id: v.id, opgelost: !!s.opgelost, punten: puntenVan(s), pogingen: s.pogingen.length, hints: s.hint || 0, rekenmachine: s.rekenmachine || 0, tijd_s: sec(s.tijd || 0), fouten: s.pogingen.filter(p => !p.goed).map(p => p.cat)}; })}, null, 1);
+    vragen: VRAGEN.map(v => { const s = S.items[v.id] || {pogingen: []}; return {id: v.id, opgelost: !!s.opgelost, punten: puntenVan(s), pogingen: s.pogingen.length, hints: s.hint || 0, rekenmachine: s.rekenmachine || 0, berekeningen: s.berekeningen || [], tijd_s: sec(s.tijd || 0), fouten: s.pogingen.filter(p => !p.goed).map(p => p.cat)}; })}, null, 1);
   const download = (naam, inhoud, type) => {
     try { const b = new Blob([inhoud], {type}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = naam; document.body.appendChild(a); a.click(); a.remove(); $('#status').textContent = 'Bestand gedownload.'; }
     catch (e) { $('#status').textContent = 'Downloaden lukt hier niet. Gebruik de kopieerknop.'; }
@@ -1095,7 +1105,11 @@ async function opslaanSupabase(A, txt, detail){
 const RM = {tok: [], cur: 0, inv: false, ans: 0, uit: null, toonBreuk: true, modus: 'math', klaar: false, fout: ''};
 const RM_TONEN = {'sin(': 'sin(', 'cos(': 'cos(', 'tan(': 'tan(', 'asin(': 'sin⁻¹(', 'acos(': 'cos⁻¹(', 'atan(': 'tan⁻¹(', '√(': '√(', '^(': '^(', '×10^(': '×10^(',
   '²': '²', '⁻¹': '⁻¹', 'π': 'π', 'Ans': 'Ans', '⁄': '⁄', 'neg': '−', '−': ' − ', '+': ' + ', '×': ' × ', '÷': ' ÷ ', '(': '(', ')': ')', ',': ','};
-function rmTekst(tokens){ return tokens.map(t => RM_TONEN[t] != null ? RM_TONEN[t] : t).join(''); }
+function rmTekst(tokens, voor){
+  return tokens.map((t, i) => {
+    if (t === '−'){ const v = i > 0 ? tokens[i - 1] : (voor || null); if (v == null || ['+', '−', '×', '÷', 'neg', '⁄'].includes(v) || /\($/.test(v)) return '−'; }
+    return RM_TONEN[t] != null ? RM_TONEN[t] : t; }).join('');
+}
 function rmInvoegen(t){
   if (RM.klaar){
     RM.klaar = false;
@@ -1153,7 +1167,7 @@ function rmParse(tokens){
       else if (isStart(x) && x.t !== 'neg'){ v = v * unair(); }   // impliciet keer, bv. 2π of 3(4)
       else break; }
     return v; }
-  function unair(){ if (pk() && pk().t === 'neg'){ p++; return -unair(); } return breuk(); }
+  function unair(){ if (pk() && (pk().t === 'neg' || pk().t === '−')){ p++; return -unair(); } if (pk() && pk().t === '+'){ p++; return unair(); } return breuk(); }
   function breuk(){ let v = macht(); while (pk() && pk().t === '⁄'){ p++; const r = macht(); if (r === 0) throw new Error('Wiskundefout'); v = v / r; } return v; }
   function macht(){ let v = post(); if (pk() && pk().t === '^('){ p++; const e = expr(); sluit(); v = Math.pow(v, e); if (isNaN(v)) throw new Error('Wiskundefout'); } return v; }
   function post(){ let v = prim(); while (pk() && (pk().t === '²' || pk().t === '⁻¹')){ const o = neem().t; if (o === '²') v = v * v; else { if (v === 0) throw new Error('Wiskundefout'); v = 1 / v; } } return v; }
@@ -1188,7 +1202,7 @@ function rmTeken(){
   const lin = RM.modus === 'lin';
   $('#rmIndInv').textContent = RM.inv ? 'INV' : ''; $('#rmIndModus').textContent = lin ? 'Lin' : 'Math';
   $('#rmInv').classList.toggle('aan', RM.inv);
-  const voor = esc(rmTekst(RM.tok.slice(0, RM.cur))), na = esc(rmTekst(RM.tok.slice(RM.cur)));
+  const voor = esc(rmTekst(RM.tok.slice(0, RM.cur))), na = esc(rmTekst(RM.tok.slice(RM.cur), RM.tok[RM.cur - 1]));
   const fmtIn = t => lin ? t : t.replace(/²/g, '<sup>2</sup>').replace(/⁻¹/g, '<sup>−1</sup>');
   $('#rmIn').innerHTML = fmtIn(voor) + (RM.klaar ? '' : '<span class="caret"></span>') + fmtIn(na);
   const el = $('#rmUit');
@@ -1209,7 +1223,30 @@ function rmToggle(open){
     rmTeken(); $('#rmLcd').focus({preventScroll: true});
   }
 }
-$('#rmToetsen').addEventListener('click', e => { const b = e.target.closest('button'); if (b) rmToets(b.dataset.t); });
+let rmDoel = null;   // het laatst gekozen antwoordvak
+document.addEventListener('focusin', e => { const t = e.target; if (t.matches && t.matches('input') && t.closest('#main') && !t.disabled) rmDoel = t; });
+function rmKopieer(){
+  const m = $('#rmMelding');
+  if (!RM.klaar || RM.uit == null){ m.textContent = 'Maak eerst een berekening en druk op =.'; return; }
+  const som = rmTekst(RM.tok).replace(/\s+/g, ' ').trim();
+  const b = RM.toonBreuk ? rmBreuk(RM.uit) : null;
+  const antw = b ? `${b[0] < 0 ? '−' : ''}${Math.abs(b[0])}/${b[1]}` : rmGetal(RM.uit);
+  const regel = `${som} = ${antw}`;
+  // in het antwoordvak zetten
+  const doel = rmDoel && document.body.contains(rmDoel) && !rmDoel.disabled ? rmDoel : document.querySelector('#invoer input:not([disabled])');
+  if (doel){ doel.value = antw; doel.dispatchEvent(new Event('input', {bubbles: true})); doel.classList.remove('goed', 'fout'); doel.focus({preventScroll: true}); }
+  // berekening bewaren bij de vraag, zoals op het examen
+  const it = ITEMS[S.huidig];
+  if (it && !it.theorie){ const st2 = st(it.id); st2.berekeningen = (st2.berekeningen || []).concat(regel).slice(-12); bewaar(); toonBerekeningen(it); }
+  try { navigator.clipboard && navigator.clipboard.writeText(regel).catch(() => {}); } catch (e) {}
+  m.textContent = doel ? `Gekopieerd: ${regel}` : `Gekopieerd: ${regel} (klik eerst in een antwoordvak)`;
+}
+function toonBerekeningen(it){
+  const vak = document.getElementById('berekeningen'); if (!vak) return;
+  const lijst = (S.items[it.id] && S.items[it.id].berekeningen) || [];
+  vak.innerHTML = lijst.length ? '<span style="font-size:13px;color:var(--zacht);width:100%">Jouw berekeningen:</span>' + lijst.map(r => `<span class="berekening">${esc(r)}</span>`).join('') : '';
+}
+$('#rmToetsen').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.t === 'kopieer') return rmKopieer(); $('#rmMelding').textContent = ''; rmToets(b.dataset.t); });
 document.querySelectorAll('input[name="rmModus"]').forEach(r => r.onchange = () => { RM.modus = r.value; rmTeken(); });
 $('#rmSluit').onclick = () => rmToggle(false);
 $('#rmKlap').onclick = () => { const rm = $('#rm'); const dicht = rm.classList.toggle('ingeklapt'); $('#rmKlap').textContent = dicht ? '▲' : '▼'; $('#rmKlap').setAttribute('aria-expanded', !dicht); };
@@ -1219,12 +1256,17 @@ $('#rm').addEventListener('keydown', e => {
   const t = /^[0-9]$/.test(e.key) ? e.key : map[e.key];
   if (t){ e.preventDefault(); rmToets(t); }
 });
-// slepen aan de titelbalk
-(() => { const rm = $('#rm'), kop = $('#rmKop'); let dx, dy, sleep = false;
-  kop.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; sleep = true; const r = rm.getBoundingClientRect(); dx = e.clientX - r.left; dy = e.clientY - r.top; kop.setPointerCapture(e.pointerId); });
-  kop.addEventListener('pointermove', e => { if (!sleep) return; const x = Math.min(Math.max(0, e.clientX - dx), innerWidth - rm.offsetWidth), y = Math.min(Math.max(0, e.clientY - dy), innerHeight - 60);
+// slepen: aan de titelbalk of de grijze behuizing
+(() => { const rm = $('#rm'); let dx, dy, sleep = false, id = null;
+  rm.addEventListener('pointerdown', e => {
+    if (e.target.closest('button, input, label, .rm-lcd')) return;
+    sleep = true; id = e.pointerId; const r = rm.getBoundingClientRect(); dx = e.clientX - r.left; dy = e.clientY - r.top;
+    rm.setPointerCapture(id); e.preventDefault(); });
+  rm.addEventListener('pointermove', e => { if (!sleep || e.pointerId !== id) return;
+    const x = Math.min(Math.max(0, e.clientX - dx), innerWidth - Math.min(rm.offsetWidth, innerWidth)), y = Math.min(Math.max(0, e.clientY - dy), innerHeight - 50);
     rm.style.left = x + 'px'; rm.style.top = y + 'px'; rm.style.right = 'auto'; rm.style.bottom = 'auto'; });
-  kop.addEventListener('pointerup', () => { sleep = false; });
+  const stop = () => { sleep = false; id = null; };
+  rm.addEventListener('pointerup', stop); rm.addEventListener('pointercancel', stop);
 })();
 rmTeken();
 
