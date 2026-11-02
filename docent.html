@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resultaten docent</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap">
+<style>
+:root{--roze:#E924D5;--paars:#5E0696;--cyaan:#45EDFF;--bg:#FBF7FE;--lijn:#E6D8F2;--tekst:#2A0A46;--zacht:#6B5A80;--goed:#16965A;--fout:#E21E2D}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tekst);font-family:'Montserrat','Segoe UI',Arial,sans-serif;font-size:16px}
+header{background:var(--paars);color:#fff;padding:14px 20px;border-bottom:5px solid var(--roze);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header h1{margin:0;font-size:20px}
+header .r{margin-left:auto}
+.wrap{max-width:1200px;margin:0 auto;padding:20px 16px}
+.kaart{background:#fff;border:2px solid var(--lijn);border-radius:16px;padding:20px;margin-bottom:16px}
+input,select,button{font-family:inherit;font-size:15px}
+input,select{border:2px solid var(--lijn);border-radius:10px;padding:9px 12px}
+button{border:0;border-radius:22px;padding:9px 18px;font-weight:700;cursor:pointer;background:var(--roze);color:#fff}
+button.licht{background:#F1E6FA;color:var(--paars)}
+.rij{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:9px 10px;border-bottom:1px solid var(--lijn);text-align:left;white-space:nowrap}
+th{color:var(--paars);font-size:13px;text-transform:uppercase;letter-spacing:.5px}
+tr.klik{cursor:pointer} tr.klik:hover{background:#F8F0FD}
+.pil{display:inline-block;padding:2px 10px;border-radius:10px;font-weight:700;font-size:13px}
+.Laag{background:#eaf8f1;color:var(--goed)} .Gemiddeld{background:#fff4d6;color:#9a6a00} .Hoog{background:#fdeced;color:var(--fout)}
+pre{white-space:pre-wrap;background:#F1E6FA;border-radius:12px;padding:14px;font-size:14px}
+.melding{font-weight:600;margin-top:8px}
+.tegels{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.tegel{border:2px solid var(--lijn);border-radius:14px;padding:12px 14px;background:#fff}
+.tegel .k{font-size:13px;color:var(--zacht);font-weight:600}.tegel .w{font-size:24px;font-weight:800;color:var(--paars)}
+</style>
+</head>
+<body>
+<header><h1>Resultaten · H2 Formules</h1><span class="r" id="wie"></span></header>
+<div class="wrap">
+  <div class="kaart" id="login">
+    <h2 style="margin-top:0;color:var(--paars)">Inloggen als docent</h2>
+    <p>Log in met het docentaccount dat je in Supabase hebt aangemaakt.</p>
+    <div class="rij"><label for="mail" style="min-width:90px">E-mail</label><input id="mail" type="email" autocomplete="username" style="width:280px"></div>
+    <div class="rij"><label for="ww" style="min-width:90px">Wachtwoord</label><input id="ww" type="password" autocomplete="current-password" style="width:280px"></div>
+    <div class="rij"><button id="inlog">Inloggen</button></div>
+    <div class="melding" id="lmelding"></div>
+  </div>
+  <div id="dash" hidden>
+    <div class="tegels" id="tegels"></div>
+    <div class="kaart" style="margin-top:16px">
+      <div class="rij">
+        <label for="fKlas">Klas</label><select id="fKlas"><option value="">Alle klassen</option></select>
+        <label for="fNaam">Zoek</label><input id="fNaam" placeholder="naam leerling">
+        <button class="licht" id="ververs">Vernieuwen</button>
+        <button class="licht" id="csv">Kopieer als tabel (Excel)</button>
+        <button class="licht" id="uit">Uitloggen</button>
+      </div>
+      <div class="melding" id="dmelding"></div>
+      <div class="tw"><table><thead><tr><th>Datum</th><th>Leerling</th><th>Klas</th><th>Cijfer</th><th>Score</th><th>Gokkans</th><th>Tip</th></tr></thead><tbody id="rijen"></tbody></table></div>
+    </div>
+    <div class="kaart" id="detail" hidden><h3 style="margin-top:0;color:var(--paars)" id="dTitel"></h3><pre id="dTekst"></pre></div>
+  </div>
+</div>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cfg = window.APP_CONFIG || {};
+let db = null, data = [];
+if (!cfg.SUPABASE_URL || !cfg.SUPABASE_ANON_KEY){ $('#lmelding').textContent = 'Supabase is nog niet ingesteld. Vul eerst config.js in.'; $('#inlog').disabled = true; }
+else db = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
+
+async function start(){
+  if (!db) return;
+  const {data: {session}} = await db.auth.getSession();
+  if (session){ $('#login').hidden = true; $('#dash').hidden = false; $('#wie').textContent = session.user.email; laad(); }
+}
+$('#inlog').onclick = async () => {
+  $('#lmelding').textContent = 'Bezig…';
+  const {error} = await db.auth.signInWithPassword({email: $('#mail').value.trim(), password: $('#ww').value});
+  if (error){ $('#lmelding').style.color = 'var(--fout)'; $('#lmelding').textContent = 'Inloggen mislukt. Controleer je e-mail en wachtwoord.'; return; }
+  $('#lmelding').textContent = ''; start();
+};
+$('#ww').addEventListener('keydown', e => { if (e.key === 'Enter') $('#inlog').click(); });
+$('#uit').onclick = async () => { await db.auth.signOut(); location.reload(); };
+$('#ververs').onclick = laad;
+$('#fKlas').onchange = toon; $('#fNaam').oninput = toon;
+
+async function laad(){
+  $('#dmelding').textContent = 'Resultaten laden…';
+  const {data: d, error} = await db.from(cfg.TABEL || 'resultaten').select('*').order('created_at', {ascending: false}).limit(2000);
+  if (error){ $('#dmelding').textContent = 'Laden mislukt: ' + error.message; return; }
+  data = d; $('#dmelding').textContent = '';
+  const klassen = [...new Set(d.map(r => r.klas).filter(Boolean))].sort();
+  const sel = $('#fKlas'); const huidig = sel.value;
+  sel.innerHTML = '<option value="">Alle klassen</option>' + klassen.map(k => `<option ${k === huidig ? 'selected' : ''}>${esc(k)}</option>`).join('');
+  toon();
+}
+function gefilterd(){
+  const k = $('#fKlas').value, n = $('#fNaam').value.trim().toLowerCase();
+  return data.filter(r => (!k || r.klas === k) && (!n || (r.leerling || '').toLowerCase().includes(n)));
+}
+function toon(){
+  const rows = gefilterd();
+  const gem = rows.length ? (rows.reduce((a, r) => a + Number(r.cijfer || 0), 0) / rows.length) : 0;
+  const hoog = rows.filter(r => r.gokkans === 'Hoog').length;
+  $('#tegels').innerHTML = `<div class="tegel"><div class="k">Inzendingen</div><div class="w">${rows.length}</div></div>
+    <div class="tegel"><div class="k">Gemiddeld cijfer</div><div class="w">${rows.length ? gem.toFixed(1).replace('.', ',') : '–'}</div></div>
+    <div class="tegel"><div class="k">Gokkans hoog</div><div class="w">${hoog}</div></div>`;
+  $('#rijen').innerHTML = rows.map((r, i) => `<tr class="klik" data-i="${data.indexOf(r)}"><td>${new Date(r.created_at).toLocaleString('nl-NL', {dateStyle: 'short', timeStyle: 'short'})}</td><td>${esc(r.leerling)}</td><td>${esc(r.klas)}</td>
+     <td><b>${Number(r.cijfer).toFixed(1).replace('.', ',')}</b></td><td>${r.score}/${r.totaal}</td><td><span class="pil ${esc(r.gokkans)}">${esc(r.gokkans)}</span></td><td style="white-space:normal;min-width:240px">${esc(r.samenvatting)}</td></tr>`).join('')
+     || '<tr><td colspan="7">Nog geen resultaten.</td></tr>';
+  document.querySelectorAll('tr.klik').forEach(tr => tr.onclick = () => { const r = data[+tr.dataset.i]; $('#detail').hidden = false; $('#dTitel').textContent = r.leerling + (r.klas ? ' · ' + r.klas : ''); $('#dTekst').textContent = r.export_tekst || ''; $('#detail').scrollIntoView({behavior: 'smooth'}); });
+}
+$('#csv').onclick = async () => {
+  const rows = gefilterd();
+  const t = ['Datum\tLeerling\tKlas\tCijfer\tScore\tTotaal\tGokkans\tTip'].concat(rows.map(r => [new Date(r.created_at).toLocaleString('nl-NL'), r.leerling, r.klas || '', String(r.cijfer).replace('.', ','), r.score, r.totaal, r.gokkans, (r.samenvatting || '').replace(/\s+/g, ' ')].join('\t'))).join('\n');
+  try { await navigator.clipboard.writeText(t); $('#dmelding').textContent = 'Gekopieerd. Plak het in Excel met Ctrl+V.'; } catch (e) { $('#dmelding').textContent = 'Kopiëren lukte niet.'; }
+};
+start();
+</script>
+</body>
+</html>

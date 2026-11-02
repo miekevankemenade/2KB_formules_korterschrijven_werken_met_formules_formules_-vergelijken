@@ -1,0 +1,877 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Werken met formules</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600;1,700&display=swap">
+<style>
+:root{
+  --roze:#E924D5; --paars:#5E0696; --cyaan:#45EDFF;
+  --bg:#FBF7FE; --vlak:#FFFFFF; --lijn:#E6D8F2; --tekst:#2A0A46; --zacht:#6B5A80;
+  --goed:#16965A; --fout:#E21E2D; --roze-licht:#FCE6FA; --paars-licht:#F1E6FA; --cyaan-licht:#DDFBFF;
+  --font:'Montserrat', 'Segoe UI', Arial, sans-serif;
+}
+*{box-sizing:border-box}
+.app>*{min-width:0}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--tekst);font-family:var(--font);font-size:17px;line-height:1.55}
+button,input,select{font-family:inherit;font-size:inherit}
+i,.var{font-style:italic;font-weight:600}
+.app{display:grid;grid-template-rows:auto auto 1fr auto;height:100vh;height:100dvh}
+/* ---------- kop ---------- */
+header{background:var(--paars);color:#fff;padding:10px max(16px,env(safe-area-inset-left)) 10px max(16px,env(safe-area-inset-right));display:flex;gap:14px;align-items:center;flex-wrap:wrap;border-bottom:5px solid var(--roze)}
+header h1{font-size:18px;margin:0;font-weight:800;letter-spacing:.2px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:20px;padding:6px 14px;font-weight:600;font-size:14px;cursor:pointer}
+.tab.actief{background:var(--cyaan);color:var(--paars)}
+.kop-rechts{margin-left:auto;display:flex;gap:10px;align-items:center;font-size:14px}
+.kop-rechts .naam{opacity:.85}
+.knop-klein{background:var(--roze);color:#fff;border:0;border-radius:20px;padding:6px 14px;font-weight:700;cursor:pointer;font-size:14px}
+/* ---------- strook met onderdelen ---------- */
+.strook{display:flex;gap:6px;overflow-x:auto;padding:8px 16px;background:var(--vlak);border-bottom:1px solid var(--lijn)}
+.stip{flex:0 0 auto;min-width:44px;height:32px;border-radius:16px;border:2px solid var(--lijn);background:var(--vlak);color:var(--tekst);font-weight:700;font-size:13px;cursor:pointer;padding:0 8px}
+.stip.theorie{border-color:var(--cyaan);background:var(--cyaan-licht)}
+.stip.goed2{background:var(--goed);border-color:var(--goed);color:#fff}
+.stip.goed1{background:#7cc9a3;border-color:#7cc9a3;color:#fff}
+.stip.goed0{background:#f3b6bb;border-color:#f3b6bb}
+.stip.bezig{border-color:var(--roze)}
+.stip.huidig{outline:3px solid var(--paars);outline-offset:1px}
+/* ---------- hoofdvlak ---------- */
+main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:0}
+.links,.rechts{min-height:0;overflow:auto;padding:22px max(16px,env(safe-area-inset-left)) 22px 24px}
+.links{background:var(--vlak);border-right:1px solid var(--lijn);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.rechts{padding-right:max(24px,env(safe-area-inset-right))}
+.label-domein{display:inline-block;font-size:12px;font-weight:600;color:var(--paars);background:var(--paars-licht);border-radius:12px;padding:3px 10px;margin-bottom:10px}
+.opdr-nr{display:flex;align-items:baseline;gap:12px;margin:0 0 8px}
+.opdr-nr b{font-size:34px;font-weight:800;color:var(--roze);line-height:1}
+.opdr-nr span{font-size:20px;font-weight:700;color:var(--paars)}
+.zin{display:block}
+.blok{margin-bottom:18px}
+.vraag{font-weight:600;color:var(--paars)}
+.witregel{height:18px}
+/* invoer */
+.antw-rij{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}
+input.inv{border:2px solid var(--lijn);border-radius:10px;padding:10px 12px;min-width:0;width:200px;background:#fff;color:var(--tekst)}
+input.inv:focus{outline:none;border-color:var(--roze);box-shadow:0 0 0 3px var(--roze-licht)}
+input.inv.breed{width:min(100%,360px)}
+input.inv.goed{border-color:var(--goed);background:#eaf8f1}
+input.inv.fout{border-color:var(--fout);background:#fdeced}
+.knoppen{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.knop{border:0;border-radius:24px;padding:11px 22px;font-weight:700;cursor:pointer}
+.knop:focus-visible,.tab:focus-visible,.stip:focus-visible,.optie:focus-visible{outline:3px solid var(--cyaan);outline-offset:2px}
+.knop.hoofd{background:var(--roze);color:#fff}
+.knop.paars{background:var(--paars);color:#fff}
+.knop.licht{background:var(--paars-licht);color:var(--paars)}
+.knop:disabled{opacity:.45;cursor:default}
+.feedback{margin-top:14px;padding:12px 16px;border-radius:12px;font-weight:600;display:none}
+.feedback.goed{display:block;background:#eaf8f1;color:var(--goed)}
+.feedback.fout{display:block;background:#fdeced;color:var(--fout)}
+.feedback.info{display:block;background:var(--cyaan-licht);color:var(--paars)}
+.hintvak{margin-top:12px;padding:12px 16px;border-radius:12px;background:var(--roze-licht);color:var(--tekst);display:none}
+.hintvak.open{display:block}
+.hintvak b{color:var(--roze)}
+.pogingen{font-size:13px;color:var(--zacht);margin-top:10px}
+/* meerkeuze */
+.opties{display:grid;gap:10px;margin:12px 0}
+.optie{text-align:left;border:2px solid var(--lijn);background:#fff;border-radius:12px;padding:11px 14px;cursor:pointer;color:var(--tekst)}
+.optie.gekozen{border-color:var(--roze);background:var(--roze-licht)}
+.optie.goed{border-color:var(--goed);background:#eaf8f1}
+.optie.fout{border-color:var(--fout);background:#fdeced}
+/* tabellen */
+.tabel-wrap{overflow-x:auto;max-width:100%}
+table.wt{border-collapse:collapse;margin:8px 0;font-variant-numeric:tabular-nums}
+table.wt th,table.wt td{padding:6px 8px;text-align:center;min-width:58px}
+table.wt th{font-weight:600}
+table.wt tr:first-child>*{border-bottom:2px solid var(--paars)}
+table.wt th:first-child,table.wt td:first-child{border-right:2px solid var(--paars);text-align:left;padding-right:14px;white-space:nowrap}
+table.wt td+td,table.wt th+th{border-left:1px solid var(--paars)}
+table.wt input{width:62px;text-align:center;border:2px solid var(--lijn);border-radius:8px;padding:6px 4px}
+table.wt input.goed{border-color:var(--goed);background:#eaf8f1}
+table.wt input.fout{border-color:var(--fout);background:#fdeced}
+.gegeven{font-weight:700;color:var(--paars)}
+/* stappen */
+.stappen{display:grid;gap:10px;margin:12px 0}
+.stap{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.stap .lab{min-width:170px;font-weight:600}
+.stap input{width:120px}
+.stap select{border:2px solid var(--lijn);border-radius:10px;padding:9px 10px;background:#fff}
+/* visueel links */
+.kaart{background:var(--bg);border:2px solid var(--lijn);border-radius:18px;padding:22px 26px;max-width:100%}
+.kaart.formule{font-size:30px;font-weight:600;color:var(--paars);text-align:center}
+.kaart .kl{font-size:14px;font-weight:700;color:var(--roze);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.formulelijst{display:grid;gap:10px;font-size:24px;color:var(--paars);font-weight:600}
+.formulelijst .nr{color:var(--roze);font-weight:800;margin-right:10px}
+svg.graf{width:100%;max-width:560px;height:auto;touch-action:manipulation;user-select:none}
+svg.graf .klik{cursor:crosshair}
+.graf-uitleg{font-size:14px;color:var(--zacht);text-align:center;max-width:520px}
+video{width:100%;max-width:820px;border-radius:14px;background:#000;box-shadow:0 8px 30px rgba(94,6,150,.18)}
+.theorie-tekst{background:var(--cyaan-licht);border-radius:16px;padding:18px 20px;margin:12px 0}
+.theorie-tekst b{color:var(--paars)}
+/* voet */
+footer{display:flex;gap:10px;align-items:center;padding:10px max(16px,env(safe-area-inset-left)) 10px max(16px,env(safe-area-inset-right));background:var(--vlak);border-top:1px solid var(--lijn)}
+footer .spacer{flex:1}
+.voortgang{font-size:14px;color:var(--zacht);font-weight:600}
+/* overlay */
+.overlay{position:fixed;inset:0;background:rgba(42,10,70,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50}
+.overlay[hidden]{display:none!important}
+.ov-doos{background:#fff;border-radius:20px;max-width:760px;width:100%;max-height:90vh;overflow:auto;padding:26px 28px;border-top:8px solid var(--cyaan)}
+.ov-doos h2{margin:0 0 6px;color:var(--paars)}
+.ov-stap{opacity:0;transform:translateY(10px);transition:opacity .5s,transform .5s;padding:10px 14px;border-radius:12px;background:var(--bg);margin:8px 0;font-size:20px;font-weight:600}
+.ov-stap.zichtbaar{opacity:1;transform:none}
+.ov-stap .nr{display:inline-block;width:28px;height:28px;border-radius:50%;background:var(--roze);color:#fff;text-align:center;line-height:28px;font-size:14px;margin-right:10px}
+/* start en eind */
+.scherm{min-height:0;overflow:auto;width:100%;max-width:860px;margin:0 auto;padding:30px max(16px,env(safe-area-inset-left)) 40px max(16px,env(safe-area-inset-right))}
+.scherm h2{color:var(--paars);font-size:30px;margin:0 0 8px}
+.cijfer{font-size:64px;font-weight:800;color:var(--roze);line-height:1}
+.tegels{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:18px 0}
+.tegel{background:#fff;border:2px solid var(--lijn);border-radius:16px;padding:14px 16px}
+.tegel .k{font-size:13px;color:var(--zacht);font-weight:600}
+.tegel .w{font-size:26px;font-weight:800;color:var(--paars)}
+.pil{display:inline-block;padding:3px 12px;border-radius:12px;font-weight:700;font-size:14px}
+.pil.laag{background:#eaf8f1;color:var(--goed)} .pil.gemiddeld{background:#fff4d6;color:#9a6a00} .pil.hoog{background:#fdeced;color:var(--fout)}
+.analyse{background:#fff;border:2px solid var(--lijn);border-radius:16px;padding:16px 18px;margin:14px 0}
+.analyse li{margin:4px 0}
+pre.export{white-space:pre-wrap;background:var(--paars-licht);border-radius:12px;padding:14px;font-size:14px;max-height:280px;overflow:auto}
+.status{font-size:14px;font-weight:600;margin-top:8px}
+@media (max-width:860px){
+  main{grid-template-columns:1fr;grid-template-rows:auto auto}
+  .app{height:auto;min-height:100vh}
+  .links,.rechts{overflow:visible;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+  .links{border-right:0;border-bottom:1px solid var(--lijn)}
+  .stap .lab{min-width:0}
+}
+@media (prefers-reduced-motion:reduce){.ov-stap{transition:none}}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div class="overlay" id="overlay" hidden>
+  <div class="ov-doos" role="dialog" aria-modal="true" aria-labelledby="ovTitel">
+    <h2 id="ovTitel">Stap voor stap</h2>
+    <div id="ovInhoud"></div>
+    <div class="knoppen"><button class="knop hoofd" id="ovSluit">Ik snap het, ik probeer het zelf</button></div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+"use strict";
+/* =========================================================
+   HULPFUNCTIES
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const VARWOORDEN = ['aantal liters','aantal weken','aantal cakes','aantal','bedrag','tijd','winst'];
+// zet losse letters (variabelen) en woordvariabelen cursief
+function fmt(s){
+  let t = esc(s);
+  t = t.replace(/(^|[^A-Za-zÀ-ÿ])([a-z])(?=$|[^A-Za-zÀ-ÿ])/g, '$1<i>$2</i>');
+  return t;
+}
+function fmtF(s){ // formule: ook woordvariabelen cursief
+  let t = fmt(s);
+  VARWOORDEN.forEach(w => { t = t.replace(new RegExp('(^|[^A-Za-z>])(' + w + ')(?=$|[^A-Za-z<])','g'), '$1<i>$2</i>'); });
+  return t;
+}
+function zinnen(lines){ return lines.map(l => l === '' ? '<div class="witregel"></div>' : `<span class="zin">${fmtF(l)}</span>`).join(''); }
+function parseNum(v){
+  if (v == null) return NaN;
+  let s = String(v).trim().replace(/€/g,'').replace(/\s+/g,'').replace(/[−–—]/g,'-').replace(',', '.');
+  if (s === '' || s === '-' ) return NaN;
+  if (!/^[-+]?\d*\.?\d+$/.test(s)) return NaN;
+  return Number(s);
+}
+function parseTijd(v){
+  const s = String(v).trim().toLowerCase().replace(/uur/g,'').replace(/\s+/g,'').replace(/[.u]/g, ':');
+  const m = s.match(/^(\d{1,2}):?(\d{2})$/);
+  if (!m) return null;
+  return Number(m[1]) * 60 + Number(m[2]);
+}
+const nu = () => Date.now();
+const sec = ms => Math.max(0, Math.round(ms / 1000));
+
+/* ---------- formule-parser (voor gelijkwaardigheid) ---------- */
+function normFormule(s){
+  return String(s).replace(/[−–—]/g,'-').replace(/[×·∙]/g,'*').replace(/:/g,'/').replace(/,/g,'.').replace(/\s+/g,'').toLowerCase();
+}
+function tokens(s){
+  const out = []; let i = 0;
+  while (i < s.length){
+    const c = s[i];
+    if (/[0-9.]/.test(c)){ let j = i; while (j < s.length && /[0-9.]/.test(s[j])) j++; out.push({t:'n', v:parseFloat(s.slice(i,j))}); i = j; continue; }
+    if (/[a-z]/.test(c)){ out.push({t:'v', v:c}); i++; continue; }
+    if ('+-*/()'.includes(c)){ out.push({t:c}); i++; continue; }
+    throw new Error('teken');
+  }
+  // impliciete vermenigvuldiging invoegen
+  const res = [];
+  out.forEach((tk, k) => {
+    const p = res[res.length - 1];
+    if (p && (p.t === 'n' || p.t === 'v' || p.t === ')') && (tk.t === 'n' || tk.t === 'v' || tk.t === '(')) res.push({t:'*', impl:true});
+    res.push(tk);
+  });
+  return res;
+}
+function parseExpr(s){
+  const tk = tokens(s); let p = 0;
+  const peek = () => tk[p], eat = t => { if (!tk[p] || tk[p].t !== t) throw new Error('syntax'); p++; };
+  function expr(){ let n = term(); while (peek() && (peek().t === '+' || peek().t === '-')){ const o = tk[p++].t; const r = term(); const l = n; n = o === '+' ? (e => l(e) + r(e)) : (e => l(e) - r(e)); } return n; }
+  function term(){ let n = unary(); while (peek() && (peek().t === '*' || peek().t === '/')){ const o = tk[p++].t; const r = unary(); const l = n; n = o === '*' ? (e => l(e) * r(e)) : (e => l(e) / r(e)); } return n; }
+  function unary(){ if (peek() && peek().t === '-'){ p++; const u = unary(); return e => -u(e); } if (peek() && peek().t === '+'){ p++; return unary(); } return atom(); }
+  function atom(){ const t = peek(); if (!t) throw new Error('eind');
+    if (t.t === 'n'){ p++; return () => t.v; }
+    if (t.t === 'v'){ p++; return e => { if (!(t.v in e)) throw new Error('var:' + t.v); return e[t.v]; }; }
+    if (t.t === '('){ p++; const n = expr(); eat(')'); return n; }
+    throw new Error('syntax'); }
+  const f = expr(); if (p !== tk.length) throw new Error('syntax'); return f;
+}
+function vergelijking(s){ // geeft {uit, f} of gooit fout
+  const n = normFormule(s); const delen = n.split('=');
+  if (delen.length !== 2 || !delen[0] || !delen[1]) throw new Error('is');
+  if (/^[a-z]$/.test(delen[0]) && !/^[a-z]$/.test(delen[1])) return {uit: delen[0], f: parseExpr(delen[1]), expr: delen[1]};
+  if (/^[a-z]$/.test(delen[1])) return {uit: delen[1], f: parseExpr(delen[0]), expr: delen[0]};
+  throw new Error('uitvoer');
+}
+function gelijkwaardig(orig, antw, invoerVars){
+  const o = vergelijking(orig); const a = vergelijking(antw);
+  if (o.uit !== a.uit) return false;
+  const proef = [-3.7, -1, 0, 1.3, 2, 5.5, 10];
+  for (let k = 0; k < proef.length; k++){
+    const env = {}; invoerVars.forEach((v, j) => env[v] = proef[(k + j * 2) % proef.length] + j * .37);
+    const x = o.f(env), y = a.f(env);
+    if (!isFinite(y) || Math.abs(x - y) > 1e-6 * Math.max(1, Math.abs(x))) return false;
+  }
+  return true;
+}
+
+/* =========================================================
+   GRAFIEK (SVG)
+   ========================================================= */
+function maakGrafiek(cfg, opties = {}){
+  const W = 560, H = 440, m = {l: 54, r: 40, t: 30, b: 50};
+  const [x0, x1] = cfg.x, [y0, y1] = cfg.y;
+  const X = v => m.l + (v - x0) / (x1 - x0) * (W - m.l - m.r);
+  const Y = v => H - m.b - (v - y0) / (y1 - y0) * (H - m.t - m.b);
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('class', 'graf'); svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', 'Assenstelsel met ' + cfg.lx + ' horizontaal en ' + cfg.ly + ' verticaal');
+  const el = (n, a, txt) => { const e = document.createElementNS(ns, n); for (const k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; svg.appendChild(e); return e; };
+  const gs = cfg.gridY || cfg.ys, gx = cfg.gridX || cfg.xs;
+  for (let v = x0; v <= x1 + 1e-9; v += gx) el('line', {x1: X(v), x2: X(v), y1: Y(y0), y2: Y(y1), stroke: '#E1D2F0', 'stroke-width': 1});
+  for (let v = y0; v <= y1 + 1e-9; v += gs) el('line', {x1: X(x0), x2: X(x1), y1: Y(v), y2: Y(v), stroke: '#E1D2F0', 'stroke-width': 1});
+  const ax = Math.min(Math.max(0, y0), y1), ay = Math.min(Math.max(0, x0), x1);
+  el('line', {x1: X(x0), x2: X(x1) + 14, y1: Y(ax), y2: Y(ax), stroke: '#5E0696', 'stroke-width': 2.5});
+  el('line', {x1: X(ay), x2: X(ay), y1: Y(y0), y2: Y(y1) - 14, stroke: '#5E0696', 'stroke-width': 2.5});
+  el('path', {d: `M${X(x1)+18},${Y(ax)} l-10,-5 v10 z`, fill: '#5E0696'});
+  el('path', {d: `M${X(ay)},${Y(y1)-18} l-5,10 h10 z`, fill: '#5E0696'});
+  const lab = cfg.labX || cfg.xs;
+  for (let v = x0; v <= x1 + 1e-9; v += lab){ const r = Math.round(v * 100) / 100; if (r === 0 && ay === 0) continue;
+    el('text', {x: X(r), y: Y(ax) + 20, 'text-anchor': 'middle', 'font-size': 13, fill: '#2A0A46', 'font-family': 'Montserrat'}, String(r).replace('-', '−')); }
+  const laby = cfg.labY || cfg.ys;
+  for (let v = y0; v <= y1 + 1e-9; v += laby){ const r = Math.round(v * 100) / 100; if (r === 0) continue;
+    el('text', {x: X(ay) - 8, y: Y(r) + 4, 'text-anchor': 'end', 'font-size': 13, fill: '#2A0A46', 'font-family': 'Montserrat'}, String(r).replace('-', '−')); }
+  el('text', {x: X(ay) - 8, y: Y(ax) + 20, 'text-anchor': 'end', 'font-size': 13, fill: '#2A0A46', 'font-family': 'Montserrat'}, '0');
+  el('text', {x: X(x1) + 4, y: Y(ax) + 38, 'text-anchor': 'end', 'font-size': 14, 'font-style': 'italic', 'font-weight': 600, fill: '#5E0696', 'font-family': 'Montserrat'}, cfg.lx + ' →');
+  el('text', {x: X(ay) + 10, y: Y(y1) - 4, 'font-size': 14, 'font-style': 'italic', 'font-weight': 600, fill: '#5E0696', 'font-family': 'Montserrat'}, cfg.ly + ' ↑');
+  // vaste lijnen
+  (opties.lijnen || []).forEach(L => {
+    const pts = []; const st = (x1 - x0) / 200;
+    for (let v = x0; v <= x1 + 1e-9; v += st){ const w = L.f(v); if (w >= y0 - 1e-9 && w <= y1 + 1e-9) pts.push([v, w]); }
+    if (pts.length > 1) el('line', {x1: X(pts[0][0]), y1: Y(pts[0][1]), x2: X(pts[pts.length-1][0]), y2: Y(pts[pts.length-1][1]), stroke: L.kleur || '#E924D5', 'stroke-width': 3.5, 'stroke-linecap': 'round'});
+    if (L.label){ const p = pts[Math.floor(pts.length * (L.pos || .85))]; el('text', {x: X(p[0]) + 8, y: Y(p[1]) - 10, 'font-size': 18, 'font-weight': 800, fill: L.kleur || '#E924D5', 'font-family': 'Montserrat'}, L.label); }
+  });
+  (opties.punten || []).forEach(([px, py]) => { el('circle', {cx: X(px), cy: Y(py), r: 7, fill: '#5E0696'}); el('text', {x: X(px) + 10, y: Y(py) - 10, 'font-size': 14, 'font-weight': 700, fill: '#5E0696', 'font-family': 'Montserrat'}, `(${px}, ${py})`.replace(/-/g, '−')); });
+  // interactief tekenen
+  if (opties.interactief){
+    const laag = document.createElementNS(ns, 'g'); svg.appendChild(laag);
+    const vang = el('rect', {x: m.l - 10, y: m.t - 10, width: W - m.l - m.r + 20, height: H - m.t - m.b + 20, fill: 'transparent', class: 'klik'});
+    const teken = () => {
+      laag.innerHTML = '';
+      const pts = opties.punt().slice().sort((a, b) => a[0] - b[0]);
+      if (pts.length >= 2){
+        const a = pts[0], b = pts[pts.length - 1];
+        const ln = document.createElementNS(ns, 'line');
+        Object.entries({x1: X(a[0]), y1: Y(a[1]), x2: X(b[0]), y2: Y(b[1]), stroke: '#E924D5', 'stroke-width': 3.5, 'stroke-linecap': 'round'}).forEach(([k, v]) => ln.setAttribute(k, v));
+        laag.appendChild(ln);
+      }
+      pts.forEach(([px, py]) => { const c = document.createElementNS(ns, 'circle'); c.setAttribute('cx', X(px)); c.setAttribute('cy', Y(py)); c.setAttribute('r', 7); c.setAttribute('fill', opties.kleurPunt ? opties.kleurPunt(px, py) : '#5E0696'); laag.appendChild(c); });
+    };
+    vang.addEventListener('click', ev => {
+      if (opties.slot && opties.slot()) return;
+      const r = svg.getBoundingClientRect(); const sx = (ev.clientX - r.left) / r.width * W, sy = (ev.clientY - r.top) / r.height * H;
+      const vx = x0 + (sx - m.l) / (W - m.l - m.r) * (x1 - x0), vy = y0 + (H - m.b - sy) / (H - m.t - m.b) * (y1 - y0);
+      const snx = cfg.snapX || 1, sny = cfg.snapY || 1;
+      const px = Math.round(Math.round(vx / snx) * snx * 100) / 100, py = Math.round(Math.round(vy / sny) * sny * 100) / 100;
+      if (px < x0 || px > x1 || py < y0 || py > y1) return;
+      const pts = opties.punt(); const i = pts.findIndex(p => p[0] === px && p[1] === py);
+      if (i >= 0) pts.splice(i, 1); else pts.push([px, py]);
+      teken(); opties.bijWijziging && opties.bijWijziging();
+    });
+    svg._teken = teken; teken();
+  }
+  return svg;
+}
+
+/* =========================================================
+   INHOUD: CONTEXTEN, THEORIE EN OPDRACHTEN
+   ========================================================= */
+const D4 = 'WI/K/4 Algebraïsche verbanden · rekenen met formules';
+const D4w = 'WI/K/4 Algebraïsche verbanden · werken met formules';
+const D4v = 'WI/K/4 Algebraïsche verbanden · tabel, grafiek en formule';
+const D4g = 'WI/K/4 Algebraïsche verbanden · gelijkwaardige formules';
+
+const G20 = {x: [-4, 8], y: [0, 160], xs: 1, ys: 20, gridY: 20, snapX: 1, snapY: 10, lx: 'tijd in minuten', ly: 'aantal liters'};
+const G22 = {x: [-3, 4], y: [-2, 12], xs: 1, ys: 2, snapX: 1, snapY: 1, labY: 2, lx: 't', ly: 'w'};
+const G25 = {x: [-2, 10], y: [-14, 22], xs: 2, ys: 2, snapX: 2, snapY: 1, labY: 2, lx: 'a', ly: 'w in euro\'s'};
+const G28 = {x: [-3, 3], y: [-2, 8], xs: 1, ys: 2, gridY: 1, labY: 2, lx: 'p', ly: 's'};
+const G29 = {x: [-2, 4], y: [-6, 8], xs: 1, ys: 1, labY: 2, lx: 'k', ly: 'm'};
+const G30 = {x: [-1, 3], y: [-6, 8], xs: 1, ys: 1, labY: 2, lx: 'd', ly: 'f'};
+
+function formuleKaart(titel, regels){ return `<div class="kaart formule"><div class="kl">${titel}</div>${regels.map(r => `<div>${fmtF(r)}</div>`).join('')}</div>`; }
+function formuleLijst(titel, regels){ return `<div class="kaart"><div class="kl">${titel}</div><div class="formulelijst">${regels.map(([n, f]) => `<div><span class="nr">${n}</span>${fmtF(f)}</div>`).join('')}</div></div>`; }
+function statTabel(h, xs, ys){ return `<div class="tabel-wrap"><table class="wt"><tr><th>${fmtF(h[0])}</th>${xs.map(x => `<th>${String(x).replace('-', '−')}</th>`).join('')}</tr><tr><th>${fmtF(h[1])}</th>${ys.map(y => `<td class="gegeven">${y == null ? '…' : String(y).replace('-', '−')}</td>`).join('')}</tr></table></div>`; }
+
+const CTX = {
+  c19: {intro: ['Harm is zijn bad aan het vullen.', 'Om 9 uur zit er al 40 liter water in het bad.', 'Elke minuut komt daar 10 liter bij.', 'De formule hierbij is tijd × 10 + 40 = aantal liters.'],
+        links: () => formuleKaart('Formule', ['tijd × 10 + 40 = aantal liters']) + statTabel(['tijd in minuten', 'aantal liters'], [0, 1, 2, 3, 4, 5], [40, null, null, null, null, null])},
+  c20: {intro: ['Om uit te rekenen hoeveel liter water er vóór 9:00 uur in het bad van opdracht 19 zat, kun je ook de formule gebruiken.', 'Met tijd = −1 wordt bedoeld één minuut vóór 9:00 uur.'],
+        links: () => formuleKaart('Formule', ['tijd × 10 + 40 = aantal liters'])},
+  c21: {intro: ['Vul h = −6 in de formule uit voorbeeld 2 in en laat zien dat p = 38.'], links: () => formuleKaart('Voorbeeld 2', ['−3 × h + 20 = p'])},
+  c22: {intro: ['Meryam rekent met de formule 6 − 2 × t = w.'], links: () => formuleKaart('Formule', ['6 − 2 × t = w'])},
+  c23: {intro: ['Schrijf de volgende formules korter.'], links: () => formuleLijst('Formules', [['a', '7 × p − 10 = q'], ['b', '8 × (k + 5) = m'], ['c', '15 − 2 × h = g']])},
+  c24: {intro: ['Maak de berekeningen op de kladblaadjes af.'], links: () => formuleLijst('Kladblaadjes', [['a', 'Vul b = 7 in de formule 5b − 8 = d in'], ['b', 'Vul k = −3 in de formule 4(k − 7) = n in'], ['c', 'Vul p = −5 in de formule 20 − 6p = s in']])},
+  c25: {intro: ['Margo verkoopt cakes op een braderie voor € 3,50 per stuk.', 'Ze kan haar winst in euro\'s uitrekenen met de woordformule', '3,50 × (aantal cakes − 4) = winst.'], links: () => formuleKaart('Woordformule', ['3,50 × (aantal cakes − 4) = winst'])},
+  cLD4: {intro: ['Leerdoelen bereikt?'], links: () => formuleLijst('Leerdoelen 2.4', [['a', 'Rekenen met negatieve getallen in een formule'], ['b', 'Formules korter schrijven']])},
+  c26: {intro: ['Johan heeft bij een formule deze tabel gemaakt.', 'Eén van de volgende formules hoort bij deze tabel.'],
+        links: () => statTabel(['p', 'q'], [-2, -1, 0, 1, 2], [-30, -5, 20, 45, 70]) + formuleLijst('Formules', [['❶', '10 × p + 20 = q'], ['❷', '45p = q'], ['❸', 'p × 25 + 20 = q']])},
+  c27: {intro: ['Twee van deze drie formules horen bij de tabel.'],
+        links: () => statTabel(['p', 'q'], [0, 1, 2, 3], [6, 9, 12, 15]) + formuleLijst('Formules', [['❶', '3p + 6 = q'], ['❷', '6 + 2p = q'], ['❸', '3(p + 2) = q']])},
+  c28: {intro: ['De grafiek hoort bij één van de volgende formules:', '❶ 2(p + 2) = s', '❷ 2p + 2 = s'], graf: () => maakGrafiek(G28, {lijnen: [{f: p => 2 * p + 2}]})},
+  c29: {intro: ['De grafiek hoort bij één van de volgende formules:', '❶ 2 × (k − 1) = m', '❷ 2k − 1 = m'], graf: () => maakGrafiek(G29, {lijnen: [{f: k => 2 * k - 1}]})},
+  c30: {intro: ['Hieronder zie je grafiek ❶ en grafiek ❷.', 'Formule A: 2 × (3 − d) = f', 'Formule B: 6 − 4d = f', 'Formule C: d = f', 'Kies roosterpunten van de grafiek en vul d = 0 en d = 2 in de formules in.'],
+        graf: () => maakGrafiek(G30, {lijnen: [{f: d => d, label: '❶', kleur: '#E924D5', pos: .95}, {f: d => 6 - 4 * d, label: '❷', kleur: '#2bb3c4', pos: .2}]})},
+  c31: {intro: ['Maarten gebruikt de formule 15 × aantal weken + 160 = bedrag om zijn spaargeld te berekenen.', 'Hierbij is bedrag in euro\'s.'], links: () => formuleKaart('Formule', ['15 × aantal weken + 160 = bedrag'])},
+  c32: {intro: ['Maak bij de volgende formules een tabel.'], links: () => formuleLijst('Formules', [['A', 'y = 2x + 4'], ['B', 'y = 4 + 2x']])},
+  c33: {intro: ['Vul in.'], links: () => formuleLijst('Formules', [['a', '7p − 10 = q'], ['a', 't = 9s + 3'], ['b', '5 × (m + 6) = p']])},
+  c34: {intro: ['Vul de tabel in bij de formule t = (s + 7) × 4.'], links: () => formuleLijst('Formules', [['', 't = (s + 7) × 4'], ['A', 't = 7 × (s + 4)'], ['B', 't = 4 × (s + 7)']])},
+  c38: {intro: ['Schrijf elk van de volgende formules op twee andere manieren.', 'Verwissel wat links en rechts van het = teken of het + teken staat, of laat het × weg.'], links: () => formuleLijst('Formules', [['A', '7 + 3 × a = b'], ['B', '5p + 9 = q'], ['C', '8 − 6 × k = m'], ['D', '(g − 4) × −2 = h']])},
+  cLD6: {intro: ['Leerdoelen bereikt?'], links: () => formuleLijst('Formules', [['1', '25 − 3 × a = b'], ['2', '6 × (m + 2) = p']])},
+};
+
+const SECTIES = [
+ {id: 's24', titel: '2.4 Werken met formules', items: [
+  {id: '19a', nr: '19', deel: 'a', ctx: 'c19', dom: D4, vraag: ['Het tijdstip 9:00 uur wordt aangegeven met tijd = 0.', 'Welke tijd wordt er dan bedoeld met tijd = 5?'], type: 'tijd', ans: '9:05',
+   hint: ['tijd = 5 betekent: 5 minuten na 9:00 uur.'], uitleg: ['tijd = 0 is 9:00 uur', 'tijd = 5 is 5 minuten later', 'Dat is 9:05 uur'], fouten: {'14:00': 'Uren en minuten verward', '5:00': 'Uren en minuten verward', '9:50': 'Minuten verkeerd genoteerd'}},
+  {id: '19b', nr: '19', deel: 'b', ctx: 'c19', dom: D4, vraag: ['Hoeveel liter water zit er in het bad als tijd = 5?'], type: 'num', ans: 90, eenheid: 'liter',
+   hint: ['Vul 5 in op de plaats van tijd.', '5 × 10 + 40 = …'], uitleg: ['tijd × 10 + 40 = aantal liters', '5 × 10 + 40 = aantal liters', '50 + 40 = 90', 'Er zit 90 liter water in het bad.'], fouten: {50: 'Optellen van 40 vergeten', 55: 'Optelfout in plaats van vermenigvuldigen', 450: 'Volgorde van berekenen fout (eerst + dan ×)'}},
+  {id: '19c', nr: '19', deel: 'c', ctx: 'c19', dom: D4, vraag: ['Vul de tabel bij de formule in.'], type: 'tabel', kop: ['tijd in minuten', 'aantal liters'], xs: [0, 1, 2, 3, 4, 5], ans: [40, 50, 60, 70, 80, 90], gegeven: [0],
+   hint: ['Elke minuut komt er 10 liter bij.', 'Bij tijd = 1: 1 × 10 + 40 = …'], uitleg: ['tijd = 1: 1 × 10 + 40 = 50', 'tijd = 2: 2 × 10 + 40 = 60', 'Elke minuut 10 liter erbij: 40, 50, 60, 70, 80, 90']},
+  {id: '20a', nr: '20', deel: 'a', ctx: 'c20', dom: D4, vraag: ['Leg uit dat bij tijd = −3 het tijdstip 8:57 uur hoort.', 'Kies de goede uitleg.'], type: 'mk',
+   opties: ['tijd = −3 betekent 3 minuten vóór 9:00 uur. Dat is 8:57 uur.', 'tijd = −3 betekent 3 minuten na 9:00 uur. Dat is 8:57 uur.', 'tijd = −3 betekent 3 uur vóór 9:00 uur.', 'tijd = −3 betekent 30 minuten vóór 9:00 uur.'], ans: 0,
+   hint: ['Een negatieve tijd is een tijd vóór 9:00 uur.'], uitleg: ['tijd = 0 is 9:00 uur', 'tijd = −1 is 8:59 uur', 'tijd = −3 is drie minuten vóór negen: 8:57 uur']},
+  {id: '20b', nr: '20', deel: 'b', ctx: 'c20', dom: D4, vraag: ['Vul de tabel bij de formule in.'], type: 'tabel', kop: ['tijd in minuten', 'aantal liters'], xs: [-3, -2, -1, 0, 1, 2], ans: [10, 20, 30, 40, 50, 60], gegeven: [3],
+   hint: ['Vul tijd = −1 in: −1 × 10 + 40 = …', '−1 × 10 = −10'], uitleg: ['tijd = −3: −3 × 10 + 40 = −30 + 40 = 10', 'tijd = −2: −20 + 40 = 20', 'tijd = −1: −10 + 40 = 30'], fouten: {}},
+  {id: '20c', nr: '20', deel: 'c', ctx: 'c20', dom: D4v, vraag: ['Teken de grafiek die hoort bij de tabellen uit opdracht 19c en opdracht 20b in het assenstelsel.', 'Klik op minstens twee punten uit de tabellen.', 'Klik nog een keer op een punt om het weg te halen.'], type: 'grafiek', g: G20, f: t => 10 * t + 40, min: 3,
+   hint: ['Gebruik de punten uit de tabellen, bijvoorbeeld (0, 40) en (2, 60).', 'Zet ook een punt bij tijd = −3: (−3, 10).'], uitleg: ['Punt (−3, 10)', 'Punt (0, 40)', 'Punt (5, 90)', 'Trek een rechte lijn door de punten.']},
+  {id: '20d', nr: '20', deel: 'd', ctx: 'c20', dom: D4v, vraag: ['Hoe laat is Harm begonnen met het vullen van het bad?'], type: 'tijd', ans: '8:56', graf: () => maakGrafiek(G20, {lijnen: [{f: t => 10 * t + 40}]}),
+   hint: ['Het bad was leeg: aantal liters = 0.', 'Bij welke tijd raakt de grafiek de horizontale as?'], uitleg: ['Aantal liters = 0 bij tijd = −4', 'tijd = −4 is 4 minuten vóór 9:00 uur', 'Harm is om 8:56 uur begonnen.'], fouten: {'9:04': 'Negatieve tijd als ná 9:00 gelezen', '8:54': 'Afleesfout op de horizontale as'}},
+  {id: '20e', nr: '20', deel: 'e', ctx: 'c20', dom: D4v, vraag: ['Hoe laat is het bad gevuld met 120 liter water?'], type: 'tijd', ans: '9:08', graf: () => maakGrafiek(G20, {lijnen: [{f: t => 10 * t + 40}]}),
+   hint: ['Zoek 120 op de verticale as.', 'Ga naar rechts tot de grafiek en lees de tijd af.'], uitleg: ['Bij 120 liter hoort tijd = 8', 'tijd = 8 is 8 minuten na 9:00 uur', 'Het bad is om 9:08 uur gevuld.'], fouten: {'9:12': 'Afleesfout: tijd = 12 is te ver'}},
+  {theorie: true, id: 'T24n', titel: 'Negatieve getallen in formules', video: 'videos/theorie_24_negatieve_getallen.mp4', tekst: ['Het invullen van <b>negatieve getallen in formules</b> gaat op dezelfde manier als het invullen van positieve getallen.']},
+  {id: '21', nr: '21', deel: '', ctx: 'c21', dom: D4, vraag: ['Maak de berekening af.'], type: 'stappen', velden: [{lab: '−3 × −6 =', ans: 18}, {lab: '18 + 20 =', ans: 38}, {lab: 'Dus p =', ans: 38}],
+   hint: ['Min keer min is plus.', '−3 × −6 = 18'], uitleg: ['−3 × h + 20 = p', '−3 × −6 + 20 = p', '18 + 20 = 38', 'Dus p = 38.'], fouten: {'-18': 'Min × min = plus vergeten'}},
+  {id: '22a', nr: '22', deel: 'a', ctx: 'c22', dom: D4, vraag: ['Laat met een berekening zien dat voor t = −1 de waarde van w gelijk is aan 8.'], type: 'stappen', velden: [{lab: '2 × −1 =', ans: -2}, {lab: '6 − −2 =', ans: 8}, {lab: 'Dus w =', ans: 8}],
+   hint: ['Eerst keer, dan min.', '6 − −2 is hetzelfde als 6 + 2.'], uitleg: ['6 − 2 × t = w', '6 − 2 × −1 = w', '6 − −2 = 8', 'Dus w = 8.'], fouten: {'4': 'Min min wordt plus vergeten', '2': 'Min-teken fout'}},
+  {id: '22b', nr: '22', deel: 'b', ctx: 'c22', dom: D4, vraag: ['Vul de tabel in.'], type: 'tabel', kop: ['t', 'w'], xs: [-3, -2, -1, 0, 1, 2, 3, 4], ans: [12, 10, 8, 6, 4, 2, 0, -2], gegeven: [2],
+   hint: ['Vul t = 0 in: 6 − 2 × 0 = 6.', 'Elke stap naar rechts wordt w 2 kleiner.'], uitleg: ['t = −3: 6 − 2 × −3 = 6 + 6 = 12', 't = 1: 6 − 2 × 1 = 4', 't = 4: 6 − 2 × 4 = −2']},
+  {id: '22c', nr: '22', deel: 'c', ctx: 'c22', dom: D4v, vraag: ['Teken de grafiek bij de tabel.', 'Klik op minstens drie punten uit de tabel.'], type: 'grafiek', g: G22, f: t => 6 - 2 * t, min: 3,
+   hint: ['Gebruik de punten uit 22b, bijvoorbeeld (0, 6) en (1, 4).'], uitleg: ['Punt (−3, 12)', 'Punt (0, 6)', 'Punt (4, −2)', 'De grafiek gaat naar beneden.']},
+  {theorie: true, id: 'T24k', titel: 'Formules korter schrijven', video: 'videos/theorie_24_korter_schrijven.mp4', tekst: ['Formules kun je <b>korter schrijven</b> door het vermenigvuldigingsteken tussen het getal en de letter weg te laten.']},
+  {id: '23a', nr: '23', deel: 'a', ctx: 'c23', dom: D4w, vraag: ['Schrijf korter: 7 × p − 10 = q'], type: 'formule', orig: '7*p-10=q', vars: ['p'], zonderKeer: true,
+   hint: ['Laat het × tussen 7 en p weg.'], uitleg: ['7 × p − 10 = q', 'wordt', '7p − 10 = q']},
+  {id: '23b', nr: '23', deel: 'b', ctx: 'c23', dom: D4w, vraag: ['Schrijf korter: 8 × (k + 5) = m'], type: 'formule', orig: '8*(k+5)=m', vars: ['k'], zonderKeer: true,
+   hint: ['Laat het × tussen 8 en het haakje weg.', 'De haakjes blijven staan.'], uitleg: ['8 × (k + 5) = m', 'wordt', '8(k + 5) = m']},
+  {id: '23c', nr: '23', deel: 'c', ctx: 'c23', dom: D4w, vraag: ['Schrijf korter: 15 − 2 × h = g'], type: 'formule', orig: '15-2*h=g', vars: ['h'], zonderKeer: true,
+   hint: ['Laat het × tussen 2 en h weg.'], uitleg: ['15 − 2 × h = g', 'wordt', '15 − 2h = g']},
+  {id: '24a', nr: '24', deel: 'a', ctx: 'c24', dom: D4, vraag: ['Vul b = 7 in de formule 5b − 8 = d in en bereken d.'], type: 'stappen', velden: [{lab: '5 × 7 =', ans: 35}, {lab: '35 − 8 =', ans: 27}, {lab: 'Dus d =', ans: 27}],
+   hint: ['5b betekent 5 × b.'], uitleg: ['5b − 8 = d', '5 × b − 8 = d', '5 × 7 − 8 = d', '35 − 8 = 27, dus d = 27.'], fouten: {'49': '5b gelezen als 5 en 7 naast elkaar (57) of fout vermenigvuldigd', '12': 'Optellen in plaats van vermenigvuldigen'}},
+  {id: '24b', nr: '24', deel: 'b', ctx: 'c24', dom: D4, vraag: ['Vul k = −3 in de formule 4(k − 7) = n in en bereken n.'], type: 'stappen', velden: [{lab: '−3 − 7 =', ans: -10}, {lab: '4 × −10 =', ans: -40}, {lab: 'Dus n =', ans: -40}],
+   hint: ['Reken eerst uit wat tussen de haakjes staat.', '−3 − 7: je gaat nog verder naar links op de getallenlijn.'], uitleg: ['4(k − 7) = n', '4 × (−3 − 7) = n', '4 × −10 = −40', 'Dus n = −40.'], fouten: {'-4': 'Min-teken fout tussen de haakjes', '4': 'Min-teken fout tussen de haakjes'}},
+  {id: '24c', nr: '24', deel: 'c', ctx: 'c24', dom: D4, vraag: ['Vul p = −5 in de formule 20 − 6p = s in en bereken s.'], type: 'stappen', velden: [{lab: '6 × −5 =', ans: -30}, {lab: '20 − −30 =', ans: 50}, {lab: 'Dus s =', ans: 50}],
+   hint: ['6 × −5 is negatief.', 'Min min wordt plus: 20 − −30 = 20 + 30.'], uitleg: ['20 − 6p = s', '20 − 6 × −5 = s', '20 − −30 = 50', 'Dus s = 50.'], fouten: {'-10': 'Min min wordt plus vergeten', '30': 'Min-teken fout'}},
+  {id: '25a', nr: '25', deel: 'a', ctx: 'c25', dom: D4w, vraag: ['Schrijf de formule als letterformule.', 'Gebruik de letters a en w en gebruik geen vermenigvuldigingsteken.'], type: 'formule', orig: '3.5*(a-4)=w', vars: ['a'], zonderKeer: true,
+   hint: ['aantal cakes wordt a, winst wordt w.', 'Laat het × tussen 3,50 en het haakje weg.'], uitleg: ['3,50 × (aantal cakes − 4) = winst', '3,50 × (a − 4) = w', '3,50(a − 4) = w']},
+  {id: '25b', nr: '25', deel: 'b', ctx: 'c25', dom: D4, vraag: ['Hoeveel is de winst als Margo tien cakes verkoopt?'], type: 'num', ans: 21, eenheid: 'euro',
+   hint: ['Vul a = 10 in.', 'Reken eerst de haakjes uit: 10 − 4 = 6.'], uitleg: ['3,50(10 − 4) = w', '3,50 × 6 = 21', 'Dus w = 21.', 'Margo heeft € 21,- winst.'], fouten: {'31': 'Haakjes niet eerst uitgerekend', '35': 'De 4 cakes niet afgetrokken'}},
+  {id: '25c', nr: '25', deel: 'c', ctx: 'c25', dom: D4, vraag: ['Wat is er aan de hand als Margo maar twee cakes verkoopt?', 'Bereken de winst w.'], type: 'num', ans: -7, eenheid: 'euro',
+   hint: ['Vul a = 2 in.', '2 − 4 is negatief.'], uitleg: ['3,50(2 − 4) = w', '3,50 × −2 = −7', 'Dus w = −7.', 'Ze heeft geen winst, maar een verlies van € 7,-.']},
+  {id: '25d', nr: '25', deel: 'd', ctx: 'c25', dom: D4, vraag: ['Vul de tabel in.'], type: 'tabel', kop: ['a', 'w in euro\'s'], xs: [0, 2, 4, 6, 8, 10], ans: [-14, -7, 0, 7, 14, 21],
+   hint: ['Gebruik 3,50(a − 4) = w.', 'a = 0: 3,50 × −4 = …'], uitleg: ['a = 0: 3,50 × −4 = −14', 'a = 4: 3,50 × 0 = 0', 'a = 10: 3,50 × 6 = 21']},
+  {id: '25e', nr: '25', deel: 'e', ctx: 'c25', dom: D4v, vraag: ['Teken een grafiek bij de tabel.', 'Klik op minstens drie punten uit de tabel.'], type: 'grafiek', g: G25, f: a => 3.5 * (a - 4), min: 3,
+   hint: ['Gebruik de punten uit 25d, bijvoorbeeld (4, 0) en (8, 14).'], uitleg: ['Punt (0, −14)', 'Punt (4, 0)', 'Punt (10, 21)', 'Trek een rechte lijn door de punten.']},
+  {id: 'LD4a1', nr: 'Leerdoelen', deel: 'a❶', ctx: 'cLD4', dom: D4, vraag: ['Vul x = −5 in de formule 6x − 10 = y in.', 'Bereken y.'], type: 'stappen', velden: [{lab: '6 × −5 =', ans: -30}, {lab: '−30 − 10 =', ans: -40}, {lab: 'Dus y =', ans: -40}],
+   hint: ['6x betekent 6 × x.', '−30 − 10: nog verder naar links op de getallenlijn.'], uitleg: ['6 × −5 − 10 = y', '−30 − 10 = −40', 'Dus y = −40.'], fouten: {'-20': 'Min-teken fout bij aftrekken', '20': 'Min-teken fout'}},
+  {id: 'LD4a2', nr: 'Leerdoelen', deel: 'a❷', ctx: 'cLD4', dom: D4, vraag: ['Vul x = −5 in de formule (−6 + x) × −2 = y in.', 'Bereken y.'], type: 'stappen', velden: [{lab: '−6 + −5 =', ans: -11}, {lab: '−11 × −2 =', ans: 22}, {lab: 'Dus y =', ans: 22}],
+   hint: ['Reken eerst de haakjes uit.', 'Min keer min is plus.'], uitleg: ['(−6 + −5) × −2 = y', '−11 × −2 = 22', 'Dus y = 22.'], fouten: {'-22': 'Min × min = plus vergeten', '-1': 'Fout tussen de haakjes'}},
+  {id: 'LD4bA', nr: 'Leerdoelen', deel: 'b A', ctx: 'cLD4', dom: D4w, vraag: ['Schrijf korter: 15 − 3 × c = d'], type: 'formule', orig: '15-3*c=d', vars: ['c'], zonderKeer: true, hint: ['Laat het × tussen 3 en c weg.'], uitleg: ['15 − 3 × c = d', 'wordt', '15 − 3c = d']},
+  {id: 'LD4bB', nr: 'Leerdoelen', deel: 'b B', ctx: 'cLD4', dom: D4w, vraag: ['Schrijf korter: 5 × (z + 11) = k'], type: 'formule', orig: '5*(z+11)=k', vars: ['z'], zonderKeer: true, hint: ['De haakjes blijven staan.'], uitleg: ['5 × (z + 11) = k', 'wordt', '5(z + 11) = k']},
+  {id: 'LD4bC', nr: 'Leerdoelen', deel: 'b C', ctx: 'cLD4', dom: D4w, vraag: ['Schrijf korter: 13 × p + 9 = q'], type: 'formule', orig: '13*p+9=q', vars: ['p'], zonderKeer: true, hint: ['Laat het × tussen 13 en p weg.'], uitleg: ['13 × p + 9 = q', 'wordt', '13p + 9 = q']},
+ ]},
+ {id: 's25', titel: '2.5 Formule, tabel en grafiek', items: [
+  {id: '26a1', nr: '26', deel: 'a ❶', ctx: 'c26', dom: D4v, vraag: ['Vul bij formule ❶ 10 × p + 20 = q de tabel in.'], type: 'tabel', kop: ['p', 'q'], xs: [-2, -1, 0, 1, 2], ans: [0, 10, 20, 30, 40], hint: ['p = −2: 10 × −2 + 20 = …'], uitleg: ['p = −2: −20 + 20 = 0', 'p = 0: 0 + 20 = 20', 'p = 2: 20 + 20 = 40']},
+  {id: '26a2', nr: '26', deel: 'a ❷', ctx: 'c26', dom: D4v, vraag: ['Vul bij formule ❷ 45p = q de tabel in.'], type: 'tabel', kop: ['p', 'q'], xs: [-2, -1, 0, 1, 2], ans: [-90, -45, 0, 45, 90], hint: ['45p betekent 45 × p.', 'p = −2: 45 × −2 = …'], uitleg: ['p = −2: 45 × −2 = −90', 'p = −1: −45', 'p = 2: 90']},
+  {id: '26a3', nr: '26', deel: 'a ❸', ctx: 'c26', dom: D4v, vraag: ['Vul bij formule ❸ p × 25 + 20 = q de tabel in.'], type: 'tabel', kop: ['p', 'q'], xs: [-2, -1, 0, 1, 2], ans: [-30, -5, 20, 45, 70], hint: ['p = −1: −1 × 25 + 20 = …'], uitleg: ['p = −2: −50 + 20 = −30', 'p = −1: −25 + 20 = −5', 'p = 2: 50 + 20 = 70']},
+  {id: '26b', nr: '26', deel: 'b', ctx: 'c26', dom: D4v, vraag: ['Welke tabel uit opdracht a is gelijk aan de tabel van Johan?'], type: 'mk', opties: ['Tabel ❶', 'Tabel ❷', 'Tabel ❸'], ans: 2, hint: ['Vergelijk elke tabel met −30, −5, 20, 45, 70.'], uitleg: ['Tabel ❸: −30, −5, 20, 45, 70', 'Die is gelijk aan de tabel van Johan.']},
+  {id: '26c', nr: '26', deel: 'c', ctx: 'c26', dom: D4v, vraag: ['Welke formule hoort bij de tabel van Johan?'], type: 'mk', opties: ['10 × p + 20 = q', '45p = q', 'p × 25 + 20 = q'], ans: 2, hint: ['Bij welke formule hoort tabel ❸?'], uitleg: ['Tabel ❸ is gelijk aan de tabel van Johan.', 'Dus de formule p × 25 + 20 = q hoort bij de tabel van Johan.']},
+  {theorie: true, id: 'T25t', titel: 'Formule bij een tabel', video: 'videos/theorie_25_formule_bij_tabel.mp4', tekst: ['Bij een tabel kunnen meerdere formules horen.', 'Door bij elke formule een tabel te maken kun je uitzoeken welke <b>formule</b> bij de gegeven <b>tabel</b> hoort.']},
+  {id: '27a1', nr: '27', deel: 'a ❶', ctx: 'c27', dom: D4v, vraag: ['Maak een tabel bij formule ❶ 3p + 6 = q.', 'Kies voor p de getallen 0 tot en met 3.'], type: 'tabel', kop: ['p', 'q'], xs: [0, 1, 2, 3], ans: [6, 9, 12, 15], hint: ['3p betekent 3 × p.'], uitleg: ['p = 1: 3 × 1 + 6 = 9', 'p = 3: 3 × 3 + 6 = 15']},
+  {id: '27a2', nr: '27', deel: 'a ❷', ctx: 'c27', dom: D4v, vraag: ['Maak een tabel bij formule ❷ 6 + 2p = q.'], type: 'tabel', kop: ['p', 'q'], xs: [0, 1, 2, 3], ans: [6, 8, 10, 12], hint: ['p = 1: 6 + 2 × 1 = …'], uitleg: ['p = 1: 6 + 2 = 8', 'p = 3: 6 + 6 = 12']},
+  {id: '27a3', nr: '27', deel: 'a ❸', ctx: 'c27', dom: D4v, vraag: ['Maak een tabel bij formule ❸ 3(p + 2) = q.'], type: 'tabel', kop: ['p', 'q'], xs: [0, 1, 2, 3], ans: [6, 9, 12, 15], hint: ['Reken eerst de haakjes uit.', 'p = 1: 3 × (1 + 2) = …'], uitleg: ['p = 1: 3 × 3 = 9', 'p = 3: 3 × 5 = 15']},
+  {id: '27b', nr: '27', deel: 'b', ctx: 'c27', dom: D4v, vraag: ['Welke formules horen bij de gegeven tabel?', 'Kies twee formules.'], type: 'mk', multi: true, opties: ['Formule ❶', 'Formule ❷', 'Formule ❸'], ans: [0, 2], hint: ['Vergelijk je tabellen met 6, 9, 12, 15.'], uitleg: ['Tabel ❶: 6, 9, 12, 15 → klopt', 'Tabel ❷: 6, 8, 10, 12 → klopt niet', 'Tabel ❸: 6, 9, 12, 15 → klopt', 'Formule ❶ en formule ❸ horen bij de tabel.']},
+  {id: '28a1', nr: '28', deel: 'a ❶', ctx: 'c28', dom: D4v, vraag: ['Maak een tabel bij formule ❶ 2(p + 2) = s.', 'Kies voor p de getallen van −2 tot en met 2.'], type: 'tabel', kop: ['p', 's'], xs: [-2, -1, 0, 1, 2], ans: [0, 2, 4, 6, 8], hint: ['p = −2: 2 × (−2 + 2) = …'], uitleg: ['p = −2: 2 × 0 = 0', 'p = 0: 2 × 2 = 4', 'p = 2: 2 × 4 = 8']},
+  {id: '28a2', nr: '28', deel: 'a ❷', ctx: 'c28', dom: D4v, vraag: ['Maak een tabel bij formule ❷ 2p + 2 = s.'], type: 'tabel', kop: ['p', 's'], xs: [-2, -1, 0, 1, 2], ans: [-2, 0, 2, 4, 6], hint: ['p = −2: 2 × −2 + 2 = …'], uitleg: ['p = −2: −4 + 2 = −2', 'p = 0: 0 + 2 = 2', 'p = 2: 4 + 2 = 6']},
+  {id: '28b', nr: '28', deel: 'b', ctx: 'c28', dom: D4v, vraag: ['Bij welke tabel hoort de grafiek?'], type: 'mk', opties: ['Tabel ❶', 'Tabel ❷'], ans: 1, hint: ['Lees af: bij p = 0 is s = 2.'], uitleg: ['De grafiek gaat door (0, 2).', 'Tabel ❷ heeft bij p = 0: s = 2.', 'Formule ❷ hoort bij de grafiek.']},
+  {id: '28c', nr: '28', deel: 'c', ctx: 'c28', dom: D4v, vraag: ['Welke formule hoort dus bij de grafiek?'], type: 'mk', opties: ['2(p + 2) = s', '2p + 2 = s'], ans: 1, hint: ['Gebruik je antwoord bij b.'], uitleg: ['De grafiek hoort bij tabel ❷.', 'De formule is 2p + 2 = s.']},
+  {theorie: true, id: 'T25g', titel: 'Formule bij een grafiek', video: 'videos/theorie_25_formule_bij_grafiek.mp4', tekst: ['Bij een grafiek kunnen meerdere formules horen.', 'Door voor minstens twee punten van de grafiek uit te zoeken bij welke formule deze punten horen, kun je uitzoeken welke <b>formule</b> bij een gegeven <b>grafiek</b> hoort.']},
+  {id: '29a', nr: '29', deel: 'a', ctx: 'c29', dom: D4v, vraag: ['Lees twee roosterpunten van de grafiek af.', 'Vul in.'], type: 'stappen', velden: [{lab: 'Bij k = 0 is m =', ans: -1}, {lab: 'Bij k = 2 is m =', ans: 3}],
+   hint: ['Kijk waar de grafiek de verticale as snijdt.'], uitleg: ['De grafiek gaat door het punt (0, −1).', 'De grafiek gaat door het punt (2, 3).'], fouten: {'1': 'Afleesfout: min-teken vergeten'}},
+  {id: '29b1', nr: '29', deel: 'b ❶', ctx: 'c29', dom: D4, vraag: ['Vul k = 0 en k = 2 in bij formule ❶ 2 × (k − 1) = m.'], type: 'stappen', velden: [{lab: 'k = 0: 2 × (0 − 1) =', ans: -2}, {lab: 'k = 2: 2 × (2 − 1) =', ans: 2}],
+   hint: ['Reken eerst de haakjes uit.'], uitleg: ['2 × (0 − 1) = 2 × −1 = −2, dus m = −2', '2 × (2 − 1) = 2 × 1 = 2, dus m = 2']},
+  {id: '29b2', nr: '29', deel: 'b ❷', ctx: 'c29', dom: D4, vraag: ['Vul k = 0 en k = 2 in bij formule ❷ 2k − 1 = m.'], type: 'stappen', velden: [{lab: 'k = 0: 2 × 0 − 1 =', ans: -1}, {lab: 'k = 2: 2 × 2 − 1 =', ans: 3}],
+   hint: ['2k betekent 2 × k.'], uitleg: ['2 × 0 − 1 = 0 − 1 = −1, dus m = −1', '2 × 2 − 1 = 4 − 1 = 3, dus m = 3']},
+  {id: '29c', nr: '29', deel: 'c', ctx: 'c29', dom: D4v, vraag: ['Bij welke formule hoort de grafiek?'], type: 'mk', opties: ['Formule ❶ 2 × (k − 1) = m', 'Formule ❷ 2k − 1 = m'], ans: 1, hint: ['De grafiek gaat door (0, −1) en (2, 3).', 'Welke formule geeft −1 en 3?'], uitleg: ['Formule ❷ geeft m = −1 en m = 3.', 'De grafiek hoort bij formule ❷: 2k − 1 = m.']},
+  {id: '30A', nr: '30', deel: 'A', ctx: 'c30', dom: D4v, vraag: ['Formule A: 2 × (3 − d) = f', 'Vul d = 0 en d = 2 in.', 'Bij welke grafiek hoort formule A?'], type: 'stappen', velden: [{lab: 'd = 0: f =', ans: 6}, {lab: 'd = 2: f =', ans: 2}, {lab: 'Grafiek:', soort: 'keuze', opties: ['kies…', 'grafiek ❶', 'grafiek ❷', 'geen enkele grafiek'], ans: 3}],
+   hint: ['2 × (3 − 0) = 2 × 3', 'Grafiek ❶ gaat door (0, 0) en (2, 2). Grafiek ❷ gaat door (0, 6) en (2, −2).'], uitleg: ['d = 0: 2 × (3 − 0) = 6, dus f = 6', 'd = 2: 2 × (3 − 2) = 2, dus f = 2', 'Grafiek ❷ gaat door (2, −2), niet door (2, 2).', 'Formule A hoort bij geen enkele grafiek.']},
+  {id: '30B', nr: '30', deel: 'B', ctx: 'c30', dom: D4v, vraag: ['Formule B: 6 − 4d = f', 'Vul d = 0 en d = 2 in.', 'Bij welke grafiek hoort formule B?'], type: 'stappen', velden: [{lab: 'd = 0: f =', ans: 6}, {lab: 'd = 2: f =', ans: -2}, {lab: 'Grafiek:', soort: 'keuze', opties: ['kies…', 'grafiek ❶', 'grafiek ❷', 'geen enkele grafiek'], ans: 2}],
+   hint: ['4d betekent 4 × d.', '6 − 4 × 2 = 6 − 8'], uitleg: ['d = 0: 6 − 4 × 0 = 6, dus f = 6', 'd = 2: 6 − 4 × 2 = −2, dus f = −2', 'Formule B hoort bij grafiek ❷.'], fouten: {'2': 'Min-teken fout bij 6 − 8'}},
+  {id: '30C', nr: '30', deel: 'C', ctx: 'c30', dom: D4v, vraag: ['Formule C: d = f', 'Vul d = 0 en d = 2 in.', 'Bij welke grafiek hoort formule C?'], type: 'stappen', velden: [{lab: 'd = 0: f =', ans: 0}, {lab: 'd = 2: f =', ans: 2}, {lab: 'Grafiek:', soort: 'keuze', opties: ['kies…', 'grafiek ❶', 'grafiek ❷', 'geen enkele grafiek'], ans: 1}],
+   hint: ['d = f betekent: f is hetzelfde getal als d.'], uitleg: ['d = 0 geeft f = 0', 'd = 2 geeft f = 2', 'Formule C hoort bij grafiek ❶.']},
+ ]},
+ {id: 's26', titel: '2.6 Gelijkwaardige formules', items: [
+  {id: '31a', nr: '31', deel: 'a', ctx: 'c31', dom: D4w, vraag: ['Maak van de formule een letterformule.', 'Gebruik de letters a en b.'], type: 'formule', orig: '15*a+160=b', vars: ['a'],
+   hint: ['aantal weken wordt a, bedrag wordt b.', 'Je mag het × weglaten.'], uitleg: ['15 × aantal weken + 160 = bedrag', '15 × a + 160 = b', '15a + 160 = b']},
+  {id: '31b', nr: '31', deel: 'b', ctx: 'c31', dom: D4, vraag: ['Vul de tabel bij deze formule in.'], type: 'tabel', kop: ['a', 'b'], xs: [0, 2, 4, 6, 8], ans: [160, 190, 220, 250, 280], hint: ['a = 2: 15 × 2 + 160 = …'], uitleg: ['a = 2: 30 + 160 = 190', 'a = 8: 120 + 160 = 280']},
+  {id: '31c', nr: '31', deel: 'c', ctx: 'c31', dom: D4, vraag: ['Volgens Maarten is het spaarbedrag ook uit te rekenen met de formule b = 15 × a + 160.', 'Vul de tabel bij deze formule in.'], type: 'tabel', kop: ['a', 'b'], xs: [0, 2, 4, 6, 8], ans: [160, 190, 220, 250, 280], hint: ['Je rekent precies hetzelfde als bij b.'], uitleg: ['a = 2: 15 × 2 + 160 = 190', 'Je krijgt dezelfde tabel als bij b.']},
+  {id: '31d', nr: '31', deel: 'd', ctx: 'c31', dom: D4g, vraag: ['Leg met behulp van de tabellen uit dat de formules uit opdracht a en opdracht c gelijkwaardig zijn.', 'Kies de goede uitleg.'], type: 'mk',
+   opties: ['Bij beide formules hoort dezelfde tabel. Ze zijn alleen op een andere manier geschreven.', 'De formules zijn gelijkwaardig omdat ze allebei de letter a hebben.', 'De tabellen zijn verschillend, dus de formules zijn gelijkwaardig.'], ans: 0,
+   hint: ['Wat valt je op als je de tabellen van b en c vergelijkt?'], uitleg: ['Tabel b: 160, 190, 220, 250, 280', 'Tabel c: 160, 190, 220, 250, 280', 'Dezelfde tabel, dus de formules zijn gelijkwaardig.']},
+  {id: '32aA', nr: '32', deel: 'a A', ctx: 'c32', dom: D4, vraag: ['Maak een tabel bij formule A: y = 2x + 4.'], type: 'tabel', kop: ['x', 'y'], xs: [-2, -1, 0, 1, 2], ans: [0, 2, 4, 6, 8], hint: ['x = −2: 2 × −2 + 4 = …'], uitleg: ['x = −2: −4 + 4 = 0', 'x = 2: 4 + 4 = 8']},
+  {id: '32aB', nr: '32', deel: 'a B', ctx: 'c32', dom: D4, vraag: ['Maak een tabel bij formule B: y = 4 + 2x.'], type: 'tabel', kop: ['x', 'y'], xs: [-2, -1, 0, 1, 2], ans: [0, 2, 4, 6, 8], hint: ['x = −2: 4 + 2 × −2 = …'], uitleg: ['x = −2: 4 + −4 = 0', 'x = 2: 4 + 4 = 8']},
+  {id: '32b', nr: '32', deel: 'b', ctx: 'c32', dom: D4g, vraag: ['Wat valt je op aan de tabellen?'], type: 'mk', opties: ['De tabellen zijn gelijk.', 'De tabellen zijn verschillend.', 'Tabel B is twee keer zo groot.'], ans: 0, hint: ['Vergelijk de getallen van A en B.'], uitleg: ['Tabel A: 0, 2, 4, 6, 8', 'Tabel B: 0, 2, 4, 6, 8', 'De tabellen zijn gelijk.']},
+  {id: '32c', nr: '32', deel: 'c', ctx: 'c32', dom: D4g, vraag: ['Wat kun je zeggen over de formules A en B?'], type: 'mk', opties: ['De twee formules zijn gelijkwaardig.', 'Formule A geeft grotere uitkomsten.', 'De formules hebben niets met elkaar te maken.'], ans: 0, hint: ['Dezelfde tabel betekent …'], uitleg: ['Bij A en B hoort dezelfde tabel.', 'De twee formules zijn gelijkwaardig.']},
+  {theorie: true, id: 'T26', titel: 'Gelijkwaardige formules', video: 'videos/theorie_26_gelijkwaardige_formules.mp4', tekst: ['Je kunt een <b>formule</b> ook <b>anders schrijven</b>. De formules blijven gelijkwaardig.', 'Je kunt bijvoorbeeld wat links en rechts van het = teken of + teken staat verwisselen.', 'Je kunt ook het vermenigvuldigingsteken tussen letter en getal weglaten.']},
+  {id: '33a1', nr: '33', deel: 'a', ctx: 'c33', dom: D4g, vraag: ['De formule 7p − 10 = q kun je ook schrijven als q = …', 'Schrijf de hele formule op.'], type: 'formule', orig: '7*p-10=q', vars: ['p'], begin: 'q', hint: ['Verwissel wat links en rechts van het = teken staat.'], uitleg: ['7p − 10 = q', 'is hetzelfde als', 'q = 7p − 10']},
+  {id: '33a2', nr: '33', deel: 'a', ctx: 'c33', dom: D4g, vraag: ['De formule t = 9s + 3 kun je ook schrijven als t = … + …', 'Schrijf de hele formule op.'], type: 'formule', orig: 't=9*s+3', vars: ['s'], begin: 't', moetStarten: '3', hint: ['Verwissel wat links en rechts van het + teken staat.', 'Begin met t = 3 + …'], uitleg: ['t = 9s + 3', 'is hetzelfde als', 't = 3 + 9s']},
+  {id: '33b', nr: '33', deel: 'b', ctx: 'c33', dom: D4g, vraag: ['Schrijf de formule 5 × (m + 6) = p op twee andere manieren.'], type: 'formule', orig: '5*(m+6)=p', vars: ['m'], aantal: 2, hint: ['Je kunt het × weglaten.', 'Je kunt ook links en rechts van het = teken verwisselen.'], uitleg: ['Mogelijke manieren:', 'p = 5(m + 6)', 'p = (m + 6) × 5', '5(m + 6) = p']},
+  {id: '34a', nr: '34', deel: 'a', ctx: 'c34', dom: D4, vraag: ['Vul de tabel in bij de formule t = (s + 7) × 4.'], type: 'tabel', kop: ['s', 't'], xs: [0, 2, 4, 6, 8], ans: [28, 36, 44, 52, 60], hint: ['Reken eerst de haakjes uit.', 's = 2: (2 + 7) × 4 = …'], uitleg: ['s = 0: 7 × 4 = 28', 's = 2: 9 × 4 = 36', 's = 8: 15 × 4 = 60']},
+  {id: '34bA', nr: '34', deel: 'b A', ctx: 'c34', dom: D4, vraag: ['Maak een tabel bij formule A: t = 7 × (s + 4).'], type: 'tabel', kop: ['s', 't'], xs: [0, 2, 4, 6, 8], ans: [28, 42, 56, 70, 84], hint: ['s = 2: 7 × (2 + 4) = …'], uitleg: ['s = 2: 7 × 6 = 42', 's = 8: 7 × 12 = 84']},
+  {id: '34bB', nr: '34', deel: 'b B', ctx: 'c34', dom: D4, vraag: ['Maak een tabel bij formule B: t = 4 × (s + 7).'], type: 'tabel', kop: ['s', 't'], xs: [0, 2, 4, 6, 8], ans: [28, 36, 44, 52, 60], hint: ['s = 2: 4 × (2 + 7) = …'], uitleg: ['s = 2: 4 × 9 = 36', 's = 8: 4 × 15 = 60']},
+  {id: '34c', nr: '34', deel: 'b', ctx: 'c34', dom: D4g, vraag: ['Welke formule is gelijk aan de formule uit opdracht a?'], type: 'mk', opties: ['Formule A: t = 7 × (s + 4)', 'Formule B: t = 4 × (s + 7)'], ans: 1, hint: ['Welke tabel is gelijk aan de tabel van opdracht a?'], uitleg: ['Tabel B: 28, 36, 44, 52, 60', 'Die is gelijk aan de tabel van a.', 'Formule B is gelijk aan t = (s + 7) × 4.']},
+  {id: '38A', nr: '38', deel: 'A', ctx: 'c38', dom: D4g, vraag: ['Schrijf 7 + 3 × a = b op twee andere manieren.'], type: 'formule', orig: '7+3*a=b', vars: ['a'], aantal: 2, hint: ['Bijvoorbeeld: laat het × weg.', 'Of verwissel links en rechts van het = teken.'], uitleg: ['Mogelijke manieren:', '7 + 3a = b', 'b = 7 + 3a', '3a + 7 = b']},
+  {id: '38B', nr: '38', deel: 'B', ctx: 'c38', dom: D4g, vraag: ['Schrijf 5p + 9 = q op twee andere manieren.'], type: 'formule', orig: '5*p+9=q', vars: ['p'], aantal: 2, hint: ['Verwissel links en rechts van het = teken.', 'Of verwissel links en rechts van het + teken.'], uitleg: ['Mogelijke manieren:', 'q = 5p + 9', '9 + 5p = q', 'q = 9 + 5p']},
+  {id: '38C', nr: '38', deel: 'C', ctx: 'c38', dom: D4g, vraag: ['Schrijf 8 − 6 × k = m op twee andere manieren.'], type: 'formule', orig: '8-6*k=m', vars: ['k'], aantal: 2, hint: ['Laat het × weg.', 'Of verwissel links en rechts van het = teken.'], uitleg: ['Mogelijke manieren:', '8 − 6k = m', 'm = 8 − 6k', 'm = 8 − 6 × k']},
+  {id: '38D', nr: '38', deel: 'D', ctx: 'c38', dom: D4g, vraag: ['Schrijf (g − 4) × −2 = h op twee andere manieren.'], type: 'formule', orig: '(g-4)*-2=h', vars: ['g'], aantal: 2, hint: ['Verwissel links en rechts van het = teken.'], uitleg: ['Mogelijke manieren:', 'h = (g − 4) × −2', '−2(g − 4) = h', 'h = −2(g − 4)']},
+  {id: 'LD6a1', nr: 'Leerdoelen', deel: 'a', ctx: 'cLD6', dom: D4g, vraag: ['De formule 25 − 3 × a = b kun je ook schrijven als b = …', 'Schrijf de hele formule op.'], type: 'formule', orig: '25-3*a=b', vars: ['a'], begin: 'b', hint: ['Verwissel wat links en rechts van het = teken staat.'], uitleg: ['25 − 3 × a = b', 'is hetzelfde als', 'b = 25 − 3a']},
+  {id: 'LD6a2', nr: 'Leerdoelen', deel: 'a', ctx: 'cLD6', dom: D4g, vraag: ['De formule 6 × (m + 2) = p kun je ook schrijven als p = …', 'Schrijf de hele formule op.'], type: 'formule', orig: '6*(m+2)=p', vars: ['m'], begin: 'p', hint: ['Begin met p =', 'Je mag het × weglaten.'], uitleg: ['6 × (m + 2) = p', 'is hetzelfde als', 'p = 6(m + 2)']},
+ ]},
+];
+const ITEMS = []; SECTIES.forEach(s => s.items.forEach(it => { it.sectie = s.id; ITEMS.push(it); }));
+const VRAGEN = ITEMS.filter(i => !i.theorie);
+
+/* =========================================================
+   TOESTAND
+   ========================================================= */
+const OPSLAG = 'formules-h2-v1';
+let S = laad() || {naam: '', klas: '', start: new Date().toISOString(), huidig: 0, items: {}, gestart: false, klaar: false};
+function laad(){ try { return JSON.parse(localStorage.getItem(OPSLAG)); } catch (e) { return null; } }
+function bewaar(){ try { localStorage.setItem(OPSLAG, JSON.stringify(S)); } catch (e) {} }
+function st(id){ if (!S.items[id]) S.items[id] = {pogingen: [], hint: 0, opgelost: false, punten: null, tijd: 0, gezien: null, laatste: null, hulpGetoond: false, invoer: null}; return S.items[id]; }
+function puntenVan(s){ if (!s.opgelost) return 0; const fouten = s.pogingen.filter(p => !p.goed).length; if (fouten === 0 && !s.hint) return 2; if (fouten <= 1) return 1; return 0; }
+
+/* =========================================================
+   WEERGAVE
+   ========================================================= */
+const app = $('#app');
+function render(){
+  if (!S.gestart) return startScherm();
+  if (S.klaar) return eindScherm();
+  const it = ITEMS[S.huidig];
+  const sec = SECTIES.find(s => s.id === it.sectie);
+  app.innerHTML = `
+  <header>
+    <h1>H2 Formules</h1>
+    <nav class="tabs" aria-label="Paragrafen">${SECTIES.map(s => `<button class="tab ${s.id === sec.id ? 'actief' : ''}" data-sec="${s.id}">${esc(s.titel)}</button>`).join('')}</nav>
+    <div class="kop-rechts"><span class="naam">${esc(S.naam)}</span><button class="knop-klein" id="naarEind">Afronden</button></div>
+  </header>
+  <div>
+    <div class="strook" id="strook">${sec.items.map(i => {
+      const idx = ITEMS.indexOf(i);
+      if (i.theorie) return `<button class="stip theorie ${idx === S.huidig ? 'huidig' : ''}" data-i="${idx}" title="Theorie: ${esc(i.titel)}">▶ Theorie</button>`;
+      const s = S.items[i.id]; let k = '';
+      if (s && s.opgelost) k = 'goed' + puntenVan(s); else if (s && s.pogingen.length) k = 'bezig';
+      return `<button class="stip ${k} ${idx === S.huidig ? 'huidig' : ''}" data-i="${idx}" title="Opdracht ${esc(i.nr)} ${esc(i.deel)}">${esc(i.nr === 'Leerdoelen' ? 'LD' : i.nr)}${esc(i.deel ? ' ' + i.deel : '')}</button>`;
+    }).join('')}</div>
+  </div>
+  <main id="main"></main>
+  <footer>
+    <button class="knop licht" id="vorige" ${S.huidig === 0 ? 'disabled' : ''}>← Vorige</button>
+    <span class="spacer"></span>
+    <span class="voortgang">${VRAGEN.filter(v => S.items[v.id] && S.items[v.id].opgelost).length} van ${VRAGEN.length} opdrachten af</span>
+    <span class="spacer"></span>
+    <button class="knop paars" id="volgende">${S.huidig === ITEMS.length - 1 ? 'Naar resultaten →' : (it.theorie ? 'Naar de opdracht →' : 'Volgende / overslaan →')}</button>
+  </footer>`;
+  app.querySelectorAll('.tab').forEach(b => b.onclick = () => { const s = SECTIES.find(x => x.id === b.dataset.sec); ga(ITEMS.indexOf(s.items[0])); });
+  app.querySelectorAll('.stip').forEach(b => b.onclick = () => ga(+b.dataset.i));
+  $('#vorige').onclick = () => ga(S.huidig - 1);
+  $('#volgende').onclick = () => S.huidig === ITEMS.length - 1 ? afronden() : ga(S.huidig + 1);
+  $('#naarEind').onclick = afronden;
+  const cur = app.querySelector('.stip.huidig'); if (cur) cur.scrollIntoView({block: 'nearest', inline: 'center'});
+  it.theorie ? toonTheorie(it) : toonVraag(it);
+}
+function ga(i){ if (i < 0 || i >= ITEMS.length) return; S.huidig = i; bewaar(); render(); window.scrollTo(0, 0); }
+
+function toonTheorie(it){
+  $('#main').innerHTML = `
+   <section class="links"><video controls preload="metadata" playsinline src="${it.video}" aria-label="Animatie: ${esc(it.titel)}"></video>
+     <div class="graf-uitleg">Zet je geluid aan. Je kunt het filmpje zo vaak bekijken als je wilt.</div></section>
+   <section class="rechts">
+     <span class="label-domein">Theorie</span>
+     <div class="opdr-nr"><span>${esc(it.titel)}</span></div>
+     <div class="theorie-tekst">${it.tekst.map(t => `<span class="zin">${t}</span>`).join('')}</div>
+     <p>Bekijk eerst het filmpje.<br>Klik daarna op <b>Naar de opdracht</b>.</p>
+   </section>`;
+}
+
+function toonVraag(it){
+  const s = st(it.id); if (!s.gezien) s.gezien = nu(); s.laatste = nu(); bewaar();
+  const ctx = CTX[it.ctx];
+  $('#main').innerHTML = `
+   <section class="links" id="links"></section>
+   <section class="rechts">
+     <span class="label-domein">${esc(it.dom)}</span>
+     <div class="opdr-nr"><b>${esc(it.nr)}</b><span>${esc(it.deel)}</span></div>
+     <div class="blok">${zinnen(ctx.intro)}</div>
+     <div class="witregel"></div>
+     <div class="blok vraag">${zinnen(it.vraag)}</div>
+     <div id="invoer"></div>
+     <div class="knoppen">
+       <button class="knop hoofd" id="controleer">Controleer</button>
+       <button class="knop licht" id="hintKnop">💡 Hint</button>
+     </div>
+     <div class="hintvak" id="hintvak"></div>
+     <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+     <div class="pogingen" id="pogingen"></div>
+   </section>`;
+  // linkerkant
+  const links = $('#links');
+  if (it.type === 'grafiek'){
+    s.invoer = s.invoer || [];
+    const svg = maakGrafiek(it.g, {interactief: true, punt: () => s.invoer, slot: () => s.opgelost, bijWijziging: bewaar,
+      kleurPunt: (x, y) => s.opgelost ? '#16965A' : '#5E0696'});
+    links.appendChild(svg);
+    links.insertAdjacentHTML('beforeend', `<div class="graf-uitleg">Klik op een roosterpunt om een punt te zetten. De lijn verschijnt vanzelf.</div><button class="knop licht" id="wis">Alles wissen</button>`);
+    $('#wis').onclick = () => { if (s.opgelost) return; s.invoer.length = 0; svg._teken(); bewaar(); };
+  } else if (it.graf){ links.appendChild(it.graf()); }
+  else if (ctx.graf){ links.appendChild(ctx.graf()); }
+  else { links.innerHTML = ctx.links(); }
+  // invoer rechts
+  const inv = $('#invoer');
+  if (it.type === 'num'){
+    inv.innerHTML = `<div class="antw-rij"><label for="a0">Antwoord:</label><input class="inv" id="a0" inputmode="decimal" autocomplete="off">${it.eenheid ? `<span>${esc(it.eenheid)}</span>` : ''}</div>`;
+  } else if (it.type === 'tijd'){
+    inv.innerHTML = `<div class="antw-rij"><label for="a0">Tijd:</label><input class="inv" id="a0" placeholder="bijv. 9:30" autocomplete="off"><span>uur</span></div>`;
+  } else if (it.type === 'formule'){
+    const n = it.aantal || 1;
+    inv.innerHTML = Array.from({length: n}, (_, k) => `<div class="antw-rij"><label for="a${k}">${n > 1 ? 'Manier ' + (k + 1) + ':' : 'Formule:'}</label><input class="inv breed" id="a${k}" autocomplete="off" spellcheck="false" placeholder="${it.begin ? it.begin + ' = …' : 'typ de formule'}"></div>`).join('')
+      + `<div class="pogingen">Typ een min als - en een keer als * of ×.</div>`;
+  } else if (it.type === 'tabel'){
+    inv.innerHTML = `<div class="tabel-wrap"><table class="wt"><tr><th>${fmtF(it.kop[0])}</th>${it.xs.map(x => `<th>${String(x).replace('-', '−')}</th>`).join('')}</tr>
+      <tr><th>${fmtF(it.kop[1])}</th>${it.ans.map((a, k) => (it.gegeven || []).includes(k) ? `<td class="gegeven">${String(a).replace('-', '−')}</td>` : `<td><input id="c${k}" inputmode="decimal" autocomplete="off" aria-label="${esc(it.kop[1])} bij ${esc(it.kop[0])} = ${it.xs[k]}"></td>`).join('')}</tr></table></div>`;
+  } else if (it.type === 'stappen'){
+    inv.innerHTML = `<div class="stappen">${it.velden.map((v, k) => `<div class="stap"><label class="lab" for="a${k}">${fmtF(v.lab)}</label>${v.soort === 'keuze'
+       ? `<select id="a${k}">${v.opties.map((o, j) => `<option value="${j}">${esc(o)}</option>`).join('')}</select>`
+       : `<input class="inv" id="a${k}" inputmode="decimal" autocomplete="off">`}</div>`).join('')}</div>`;
+  } else if (it.type === 'mk'){
+    inv.innerHTML = `<div class="opties">${it.opties.map((o, k) => `<button class="optie" data-k="${k}" aria-pressed="false">${fmtF(o)}</button>`).join('')}</div>`;
+    s.keuze = s.keuze || [];
+    inv.querySelectorAll('.optie').forEach(b => b.onclick = () => {
+      if (s.opgelost) return; const k = +b.dataset.k;
+      if (it.multi){ const i = s.keuze.indexOf(k); i >= 0 ? s.keuze.splice(i, 1) : s.keuze.push(k); }
+      else s.keuze = [k];
+      inv.querySelectorAll('.optie').forEach(x => { const on = s.keuze.includes(+x.dataset.k); x.classList.toggle('gekozen', on); x.setAttribute('aria-pressed', on); });
+    });
+  }
+  herstelInvoer(it, s);
+  $('#controleer').onclick = () => controleer(it);
+  $('#hintKnop').onclick = () => toonHint(it);
+  inv.querySelectorAll('input').forEach(i => i.addEventListener('keydown', e => { if (e.key === 'Enter') controleer(it); }));
+  toonStatus(it);
+}
+
+function herstelInvoer(it, s){
+  const w = s.waarden || {};
+  Object.entries(w).forEach(([id, v]) => { const e = document.getElementById(id); if (e) e.value = v; });
+  if (it.type === 'mk' && s.keuze) document.querySelectorAll('.optie').forEach(x => x.classList.toggle('gekozen', s.keuze.includes(+x.dataset.k)));
+  if (s.hint){ const hv = $('#hintvak'); hv.classList.add('open'); hv.innerHTML = it.hint.slice(0, s.hint).map((h, k) => `<div><b>Hint ${k + 1}:</b> ${fmtF(h)}</div>`).join(''); }
+}
+function verzamel(it){
+  const w = {}; document.querySelectorAll('#invoer input, #invoer select').forEach(e => w[e.id] = e.value); return w;
+}
+function toonStatus(it){
+  const s = st(it.id); const fb = $('#feedback'); const pg = $('#pogingen');
+  const n = s.pogingen.length;
+  pg.textContent = n ? `Pogingen: ${n}${s.hint ? ' · hint gebruikt' : ''}` : '';
+  if (s.opgelost){
+    const p = puntenVan(s);
+    fb.className = 'feedback goed';
+    fb.innerHTML = `Goed zo! Je krijgt ${p} ${p === 1 ? 'punt' : 'punten'}.<br>${it.uitleg.map(u => fmtF(u)).join('<br>')}`;
+    document.querySelectorAll('#invoer input, #invoer select').forEach(e => { e.disabled = true; });
+    $('#controleer').disabled = true; $('#hintKnop').disabled = true;
+  }
+}
+
+/* ---------- nakijken ---------- */
+function controleer(it){
+  const s = st(it.id); if (s.opgelost) return;
+  const w = verzamel(it); s.waarden = w;
+  let goed = false, cat = '', leeg = false;
+  const markeer = (id, ok) => { const e = document.getElementById(id); if (e){ e.classList.toggle('goed', ok); e.classList.toggle('fout', !ok); } };
+  if (it.type === 'num'){
+    const v = parseNum(w.a0); leeg = w.a0.trim() === '';
+    goed = Math.abs(v - it.ans) < 1e-9;
+    if (!goed && !leeg){ cat = (it.fouten && it.fouten[String(v)]) || (isNaN(v) ? 'Geen getal ingevuld' : (Math.abs(v + it.ans) < 1e-9 ? 'Min-teken fout' : 'Rekenfout')); }
+    markeer('a0', goed);
+  } else if (it.type === 'tijd'){
+    leeg = w.a0.trim() === '';
+    const v = parseTijd(w.a0); goed = v === parseTijd(it.ans);
+    if (!goed && !leeg){ const k = v == null ? '' : `${Math.floor(v / 60)}:${String(v % 60).padStart(2, '0')}`; cat = (it.fouten && it.fouten[k]) || (v == null ? 'Tijd niet goed genoteerd (gebruik bijv. 9:05)' : 'Afleesfout of rekenfout bij de tijd'); }
+    markeer('a0', goed);
+  } else if (it.type === 'tabel'){
+    let fout = 0, min = 0; leeg = true;
+    it.ans.forEach((a, k) => { if ((it.gegeven || []).includes(k)) return; const v = parseNum(w['c' + k]); if (w['c' + k].trim() !== '') leeg = false;
+      const ok = Math.abs(v - a) < 1e-9; markeer('c' + k, ok); if (!ok){ fout++; if (Math.abs(v + a) < 1e-9 && a !== 0) min++; } });
+    goed = fout === 0;
+    if (!goed && !leeg) cat = min ? `Min-teken fout in de tabel (${fout} ${fout === 1 ? 'vakje' : 'vakjes'} fout)` : `Rekenfout in de tabel (${fout} ${fout === 1 ? 'vakje' : 'vakjes'} fout)`;
+  } else if (it.type === 'stappen'){
+    let fout = 0; leeg = true; let eerste = '';
+    it.velden.forEach((f, k) => { const raw = w['a' + k];
+      let ok;
+      if (f.soort === 'keuze'){ ok = +raw === f.ans; if (+raw !== 0) leeg = false; }
+      else { const v = parseNum(raw); if (raw.trim() !== '') leeg = false; ok = Math.abs(v - f.ans) < 1e-9;
+        if (!ok && !eerste) eerste = (it.fouten && it.fouten[String(v)]) || (!isNaN(v) && Math.abs(v + f.ans) < 1e-9 && f.ans !== 0 ? 'Min-teken fout' : ''); }
+      if (!ok && f.soort === 'keuze' && !eerste) eerste = 'Verkeerde grafiek gekozen';
+      markeer('a' + k, ok); if (!ok) fout++; });
+    goed = fout === 0; if (!goed && !leeg) cat = eerste || 'Rekenfout in een tussenstap';
+  } else if (it.type === 'mk'){
+    const k = (s.keuze || []).slice().sort(); leeg = k.length === 0;
+    const ans = (it.multi ? it.ans : [it.ans]).slice().sort();
+    goed = k.length === ans.length && k.every((v, i) => v === ans[i]);
+    document.querySelectorAll('.optie').forEach(x => { x.classList.remove('goed', 'fout'); if (k.includes(+x.dataset.k)) x.classList.add(goed ? 'goed' : 'fout'); });
+    if (!goed && !leeg) cat = it.multi && k.length !== ans.length ? `Niet het goede aantal antwoorden gekozen (kies er ${ans.length})` : 'Verkeerde keuze gemaakt';
+  } else if (it.type === 'formule'){
+    const n = it.aantal || 1; const ok = []; leeg = true; const gezien = new Set([normFormule(it.orig.replace(/\*/g, '×'))]);
+    for (let k = 0; k < n; k++){
+      const raw = w['a' + k] || ''; if (raw.trim()) leeg = false;
+      let r = false, c = '';
+      try {
+        const nf = normFormule(raw);
+        if (!raw.trim()) c = 'Niets ingevuld';
+        else if (it.zonderKeer && /\*/.test(nf)) c = '×-teken niet weggelaten';
+        else if (n > 1 && (nf === normFormule(it.orig) || gezien.has(nf))) c = 'Zelfde formule als de gegeven formule (of twee keer dezelfde)';
+        else if (it.begin && !nf.startsWith(it.begin + '=')) c = `Begin met ${it.begin} =`;
+        else if (it.moetStarten && !nf.startsWith(it.begin + '=' + it.moetStarten)) c = 'Wat links en rechts van het + teken staat is niet verwisseld';
+        else if (gelijkwaardig(it.orig, raw, it.vars)) r = true;
+        else c = (/\(/.test(it.orig) && !/\(/.test(nf)) ? 'Haakjes vergeten' : 'Formule is niet gelijkwaardig aan de gegeven formule';
+        gezien.add(nf);
+      } catch (e) { c = /var:/.test(e.message) ? 'Verkeerde letter gebruikt' : 'Formule niet goed opgeschreven'; }
+      markeer('a' + k, r); ok.push(r); if (!r && !cat && raw.trim()) cat = c;
+    }
+    goed = ok.every(Boolean);
+  } else if (it.type === 'grafiek'){
+    const pts = s.invoer || []; leeg = pts.length === 0;
+    const fout = pts.filter(([x, y]) => Math.abs(it.f(x) - y) > 1e-9);
+    goed = pts.length >= it.min && fout.length === 0;
+    if (!goed && !leeg) cat = fout.length ? `Punt ligt niet op de grafiek (${fout.map(p => '(' + p.join(', ') + ')').join(' ').replace(/-/g, '−')})` : `Te weinig punten gezet (minstens ${it.min})`;
+  }
+  const fb = $('#feedback');
+  if (leeg){ fb.className = 'feedback info'; fb.textContent = 'Vul eerst een antwoord in.'; return; }
+  const t = nu(); const dt = t - (s.laatste || t); s.laatste = t;
+  s.pogingen.push({goed, cat, ms: dt, keuze: it.type === 'mk' ? (s.keuze || []).slice() : undefined, hint: s.hint});
+  s.tijd = t - s.gezien;
+  if (goed){ s.opgelost = true; s.punten = puntenVan(s); bewaar(); toonStatus(it); updateStrook(); if (it.type === 'grafiek') document.querySelector('svg.graf')._teken(); return; }
+  bewaar();
+  const fouten = s.pogingen.filter(p => !p.goed).length;
+  fb.className = 'feedback fout';
+  fb.innerHTML = `Nog niet goed.${cat ? '<br>' + fmtF(cat) + '.' : ''}<br>${fouten === 1 ? 'Kijk nog eens goed en probeer het opnieuw.' : fouten === 2 ? 'Gebruik de hint als je vastzit.' : 'Probeer het nog een keer.'}`;
+  $('#pogingen').textContent = `Pogingen: ${s.pogingen.length}${s.hint ? ' · hint gebruikt' : ''}`;
+  updateStrook();
+  if (fouten >= 4 && !s.hulpGetoond){ s.hulpGetoond = true; bewaar(); toonHulp(it); }
+}
+function updateStrook(){
+  const it = ITEMS[S.huidig]; const b = document.querySelector(`.stip[data-i="${S.huidig}"]`); if (!b) return;
+  const s = S.items[it.id]; b.classList.remove('goed0', 'goed1', 'goed2', 'bezig');
+  if (s.opgelost) b.classList.add('goed' + puntenVan(s)); else if (s.pogingen.length) b.classList.add('bezig');
+  const v = document.querySelector('.voortgang'); if (v) v.textContent = `${VRAGEN.filter(x => S.items[x.id] && S.items[x.id].opgelost).length} van ${VRAGEN.length} opdrachten af`;
+}
+function toonHint(it){
+  const s = st(it.id); if (s.opgelost) return;
+  s.hint = Math.min(it.hint.length, (s.hint || 0) + 1); bewaar();
+  const hv = $('#hintvak'); hv.classList.add('open');
+  hv.innerHTML = it.hint.slice(0, s.hint).map((h, k) => `<div><b>Hint ${k + 1}:</b> ${fmtF(h)}</div>`).join('')
+    + (s.hint >= it.hint.length ? '' : '<div style="font-size:13px;margin-top:6px">Klik nog een keer op Hint voor meer hulp.</div>');
+  $('#pogingen').textContent = `Pogingen: ${s.pogingen.length} · hint gebruikt`;
+}
+function toonHulp(it){
+  const ov = $('#overlay'); const inh = $('#ovInhoud');
+  inh.innerHTML = `<p>Je hebt het nu vier keer geprobeerd.<br>Hier zie je stap voor stap hoe het werkt.</p>` + it.uitleg.map((u, k) => `<div class="ov-stap"><span class="nr">${k + 1}</span>${fmtF(u)}</div>`).join('');
+  if (it.type === 'grafiek'){ const g = maakGrafiek(it.g, {lijnen: [{f: it.f}]}); g.style.maxWidth = '440px'; inh.appendChild(g); }
+  ov.hidden = false;
+  inh.querySelectorAll('.ov-stap').forEach((e, k) => setTimeout(() => e.classList.add('zichtbaar'), 400 + k * 1100));
+  $('#ovSluit').focus();
+}
+$('#ovSluit').onclick = () => { $('#overlay').hidden = true; };
+
+/* =========================================================
+   START- EN EINDSCHERM
+   ========================================================= */
+function startScherm(){
+  app.innerHTML = `<div class="scherm" style="grid-row:1/-1">
+    <span class="label-domein">VMBO Basis · Hoofdstuk 2 Formules</span>
+    <h2>Werken met formules</h2>
+    <p>In deze app oefen je met:<br>• negatieve getallen invullen in formules<br>• formules korter schrijven<br>• formule, tabel en grafiek<br>• gelijkwaardige formules</p>
+    <p>Bij elke theorie hoort een filmpje.<br>Bij elke opdracht kun je een hint vragen.</p>
+    <div class="witregel"></div>
+    <div class="antw-rij"><label for="naam" style="min-width:150px">Je naam of leerlingnummer:</label><input class="inv breed" id="naam" autocomplete="name" value="${esc(S.naam)}"></div>
+    <div class="antw-rij"><label for="klas" style="min-width:150px">Je klas:</label><input class="inv" id="klas" value="${esc(S.klas)}"></div>
+    <div class="feedback" id="fbStart"></div>
+    <div class="knoppen"><button class="knop hoofd" id="begin">Beginnen</button>${Object.keys(S.items).length ? '<button class="knop licht" id="opnieuw">Helemaal opnieuw beginnen</button>' : ''}</div>
+  </div>`;
+  $('#begin').onclick = () => { const n = $('#naam').value.trim(); if (!n){ const f = $('#fbStart'); f.className = 'feedback fout'; f.textContent = 'Vul eerst je naam of leerlingnummer in.'; return; }
+    S.naam = n; S.klas = $('#klas').value.trim(); S.gestart = true; bewaar(); render(); };
+  const o = $('#opnieuw'); if (o) o.onclick = () => { S = {naam: '', klas: '', start: new Date().toISOString(), huidig: 0, items: {}, gestart: false, klaar: false}; bewaar(); render(); };
+}
+
+function analyse(){
+  let behaald = 0; const totaal = VRAGEN.length * 2; const regels = []; const cats = {};
+  let alle = 0, snel = 0, spreiding = 0, rits = 0;
+  VRAGEN.forEach(v => {
+    const s = S.items[v.id];
+    const naam = `Vraag ${v.nr === 'Leerdoelen' ? 'Leerdoelen ' : v.nr}${v.deel ? (v.nr === 'Leerdoelen' ? '' : '') + v.deel.replace(/\s+/g, '') : ''}`;
+    if (!s || !s.pogingen.length){ regels.push({naam, tekst: 'Overgeslagen', punten: 0, pogingen: 0, tijd: 0, fouten: []}); return; }
+    const p = puntenVan(s); behaald += p;
+    const fouten = s.pogingen.filter(x => !x.goed).map(x => x.cat).filter(Boolean);
+    fouten.forEach(c => { const k = c.replace(/\s*\(.*\)$/, ''); cats[k] = (cats[k] || 0) + 1; });
+    alle += s.pogingen.length;
+    s.pogingen.forEach((x, i) => { if (x.ms < 3000) snel++; if (i > 0 && !x.goed && !s.pogingen[i - 1].goed && x.ms < 5000 && !x.hint) rits++; });
+    if (v.type === 'mk' && !v.multi){ const geprobeerd = new Set(s.pogingen.map(x => (x.keuze || [])[0])); if (geprobeerd.size >= v.opties.length - 1 && v.opties.length >= 3) spreiding++; }
+    const t = sec(s.tijd || 0);
+    let tekst;
+    if (!s.opgelost) tekst = `0 pt (Niet afgemaakt; Fout: ${fouten[fouten.length - 1] || 'onbekend'}; Pogingen: ${s.pogingen.length}, Tijd: ${t}s)`;
+    else if (p === 2) tekst = `Goed (Pogingen: ${s.pogingen.length}, Tijd: ${t}s)`;
+    else tekst = `${p} pt (${fouten.length ? 'Fout: ' + fouten[0] + '; ' : 'Hint gebruikt; '}Pogingen: ${s.pogingen.length}, Tijd: ${t}s)`;
+    regels.push({naam, tekst, punten: p, pogingen: s.pogingen.length, tijd: t, fouten, hint: s.hint || 0});
+  });
+  const cijfer = Math.min(10, Math.max(1, Math.round(((behaald / totaal) * 9 + 1) * 10) / 10));
+  const gokScore = alle ? (snel + spreiding * 3 + rits) / alle : 0;
+  const gok = gokScore < .15 ? 'Laag' : gokScore < .35 ? 'Gemiddeld' : 'Hoog';
+  const top = Object.entries(cats).sort((a, b) => b[1] - a[1]);
+  const ADVIES = {
+    'Min-teken fout': 'Oefen min × min = plus en min − min = plus met de getallenlijn.',
+    'Min × min = plus vergeten': 'Herhaal de regel: min keer min is plus.',
+    'Min min wordt plus vergeten': 'Herhaal: iets aftrekken van een negatief getal is optellen (6 − −2 = 6 + 2).',
+    '×-teken niet weggelaten': 'Laat zien dat 6 × k korter wordt geschreven als 6k.',
+    'Haakjes vergeten': 'Laat zien dat bij korter schrijven de haakjes blijven staan.',
+    'Rekenfout in de tabel': 'Laat de leerling eerst één vakje hardop uitrekenen.',
+    'Min-teken fout in de tabel': 'Oefen het invullen van negatieve getallen met een getallenlijn.',
+    'Punt ligt niet op de grafiek': 'Laat de leerling punten uit de tabel overnemen in het assenstelsel.',
+    'Formule is niet gelijkwaardig aan de gegeven formule': 'Laat met een tabel controleren of twee formules gelijkwaardig zijn.',
+    'Verkeerde keuze gemaakt': 'Laat de leerling eerst de tabellen vergelijken voordat hij kiest.'
+  };
+  const tip = top.length ? (ADVIES[top[0][0]] || `Meest gemaakte fout: "${top[0][0]}". Bespreek deze opdrachten samen.`) : (behaald === totaal ? 'Alles in één keer goed: geef deze leerling uitdagende opdrachten.' : 'Laat de leerling de overgeslagen opdrachten nog maken.');
+  return {behaald, totaal, cijfer, gok, regels, cats: top, tip, snel, spreiding, rits, alle};
+}
+function exportTekst(A){
+  const d = new Date();
+  return `Leerling: ${S.naam}${S.klas ? ' (' + S.klas + ')' : ''}
+Datum & Tijd: ${d.toLocaleDateString('nl-NL')} ${d.toLocaleTimeString('nl-NL', {hour: '2-digit', minute: '2-digit'})}
+Cijfer: ${A.cijfer.toFixed(1).replace('.', ',')} (Score: ${A.behaald}/${A.totaal})
+Gokkans: ${A.gok}
+Foutenanalyse:
+${A.regels.map(r => `- ${r.naam}: ${r.tekst}`).join('\n')}
+Korte samenvatting: ${A.tip}`;
+}
+function afronden(){ S.klaar = true; bewaar(); render(); }
+
+function eindScherm(){
+  const A = analyse(); const txt = exportTekst(A);
+  const cfg = window.APP_CONFIG || {};
+  app.innerHTML = `<div class="scherm" style="grid-row:1/-1;overflow:auto">
+    <span class="label-domein">Resultaten · ${esc(cfg.MODULE || 'H2 Formules')}</span>
+    <h2>Goed gewerkt, ${esc(S.naam)}!</h2>
+    <div class="tegels">
+      <div class="tegel"><div class="k">Cijfer</div><div class="cijfer">${A.cijfer.toFixed(1).replace('.', ',')}</div></div>
+      <div class="tegel"><div class="k">Punten</div><div class="w">${A.behaald} / ${A.totaal}</div></div>
+      <div class="tegel"><div class="k">Opdrachten af</div><div class="w">${VRAGEN.filter(v => S.items[v.id] && S.items[v.id].opgelost).length} / ${VRAGEN.length}</div></div>
+      <div class="tegel"><div class="k">Gokkans</div><div class="w"><span class="pil ${A.gok.toLowerCase()}">${A.gok}</span></div></div>
+    </div>
+    <div class="analyse"><b>Wat ging er mis?</b>
+      ${A.cats.length ? `<ul>${A.cats.slice(0, 6).map(([c, n]) => `<li>${fmtF(c)}: ${n} keer</li>`).join('')}</ul>` : '<p>Geen fouten gevonden.</p>'}
+      <b>Tip:</b> ${esc(A.tip)}
+      <p style="font-size:13px;color:var(--zacht)">Gokkans is berekend uit snelle antwoorden (onder 3 seconden: ${A.snel}), snel achter elkaar fout zonder hint (${A.rits}) en alle opties uitproberen (${A.spreiding}).</p>
+    </div>
+    <div class="knoppen">
+      <button class="knop hoofd" id="kopieer">Kopieer resultaten voor Forms</button>
+      <button class="knop paars" id="dlTxt">Download resultaten (.txt)</button>
+      <button class="knop paars" id="dlJson">Download resultaten (.json)</button>
+      <button class="knop licht" id="terug">← Terug naar de opdrachten</button>
+    </div>
+    <div class="status" id="status"></div>
+    <div class="status" id="dbStatus"></div>
+    <pre class="export" id="exportTxt">${esc(txt)}</pre>
+  </div>`;
+  $('#terug').onclick = () => { S.klaar = false; bewaar(); render(); };
+  $('#kopieer').onclick = async () => {
+    try { await navigator.clipboard.writeText(txt); $('#status').textContent = 'Gekopieerd! Plak het met Ctrl+V in Forms.'; }
+    catch (e) { const r = document.createRange(); r.selectNodeContents($('#exportTxt')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); $('#status').textContent = 'Kopiëren lukte niet automatisch. De tekst is geselecteerd: druk op Ctrl+C.'; }
+  };
+  const json = () => JSON.stringify({leerling: S.naam, klas: S.klas, module: cfg.MODULE, datum: new Date().toISOString(), cijfer: A.cijfer, score: A.behaald, totaal: A.totaal, gokkans: A.gok, tip: A.tip,
+    vragen: VRAGEN.map(v => { const s = S.items[v.id] || {pogingen: []}; return {id: v.id, opgelost: !!s.opgelost, punten: puntenVan(s), pogingen: s.pogingen.length, hints: s.hint || 0, tijd_s: sec(s.tijd || 0), fouten: s.pogingen.filter(p => !p.goed).map(p => p.cat)}; })}, null, 1);
+  const download = (naam, inhoud, type) => {
+    try { const b = new Blob([inhoud], {type}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = naam; document.body.appendChild(a); a.click(); a.remove(); $('#status').textContent = 'Bestand gedownload.'; }
+    catch (e) { $('#status').textContent = 'Downloaden lukt hier niet. Gebruik de kopieerknop.'; }
+  };
+  const bestandsnaam = (S.naam || 'leerling').replace(/[^A-Za-z0-9_-]+/g, '_');
+  $('#dlTxt').onclick = () => download(`resultaten_${bestandsnaam}.txt`, txt, 'text/plain');
+  $('#dlJson').onclick = () => download(`resultaten_${bestandsnaam}.json`, json(), 'application/json');
+  opslaanSupabase(A, txt, JSON.parse(json()));
+}
+
+/* =========================================================
+   SUPABASE
+   ========================================================= */
+async function opslaanSupabase(A, txt, detail){
+  const cfg = window.APP_CONFIG || {}; const el = $('#dbStatus');
+  const sleutel = A.behaald + '-' + A.alle + '-' + A.regels.filter(r => r.pogingen).length;
+  if (S.opgeslagen === sleutel){ el.style.color = 'var(--goed)'; el.textContent = 'Je resultaten zijn al opgeslagen bij je docent.'; return; }
+  if (!cfg.SUPABASE_URL || !cfg.SUPABASE_ANON_KEY || !window.supabase){ el.textContent = 'Online opslaan staat uit. Gebruik de kopieer- of downloadknop.'; return; }
+  el.textContent = 'Resultaten worden opgeslagen…';
+  try {
+    const db = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
+    const rij = {leerling: S.naam, klas: S.klas || null, module: cfg.MODULE || null, cijfer: A.cijfer, score: A.behaald, totaal: A.totaal, gokkans: A.gok, samenvatting: A.tip, export_tekst: txt, details: detail, sessie_start: S.start};
+    const {error} = await db.from(cfg.TABEL || 'resultaten').insert(rij);
+    if (error) throw error;
+    S.opgeslagen = sleutel; bewaar();
+    el.style.color = 'var(--goed)'; el.textContent = 'Je resultaten zijn opgeslagen bij je docent.';
+  } catch (e) {
+    el.style.color = 'var(--fout)'; el.textContent = 'Opslaan bij je docent is niet gelukt. Gebruik de kopieer- of downloadknop.';
+  }
+}
+
+render();
+</script>
+</body>
+</html>
