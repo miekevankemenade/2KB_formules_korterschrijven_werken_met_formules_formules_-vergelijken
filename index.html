@@ -79,17 +79,19 @@ input.inv.fout{border-color:var(--fout);background:#fdeced}
 .optie.gekozen{border-color:var(--roze);background:var(--roze-licht)}
 .optie.goed{border-color:var(--goed);background:#eaf8f1}
 .optie.fout{border-color:var(--fout);background:#fdeced}
-/* tabellen */
-.tabel-wrap{overflow-x:auto;max-width:100%}
-table.wt{border-collapse:collapse;margin:8px 0;font-variant-numeric:tabular-nums}
-table.wt th,table.wt td{padding:6px 8px;text-align:center;min-width:58px}
+/* tabellen: altijd helemaal zichtbaar, geen schuifbalk */
+.tabel-wrap{max-width:100%;overflow:visible}
+table.wt{border-collapse:collapse;margin:8px 0;font-variant-numeric:tabular-nums;width:100%;max-width:640px;table-layout:fixed}
+table.wt th,table.wt td{padding:6px 3px;text-align:center;min-width:0}
 table.wt th{font-weight:600}
 table.wt tr:first-child>*{border-bottom:2px solid var(--paars)}
-table.wt th:first-child,table.wt td:first-child{border-right:2px solid var(--paars);text-align:left;padding-right:14px;white-space:nowrap}
+table.wt th:first-child,table.wt td:first-child{border-right:2px solid var(--paars);text-align:left;padding-right:8px;width:7.5em;white-space:normal;line-height:1.25}
 table.wt td+td,table.wt th+th{border-left:1px solid var(--paars)}
-table.wt input{width:62px;text-align:center;border:2px solid var(--lijn);border-radius:8px;padding:6px 4px}
+table.wt input{width:100%;max-width:64px;min-width:0;text-align:center;border:2px solid var(--lijn);border-radius:8px;padding:6px 1px}
 table.wt input.goed{border-color:var(--goed);background:#eaf8f1}
 table.wt input.fout{border-color:var(--fout);background:#fdeced}
+table.wt.kort th:first-child,table.wt.kort td:first-child{width:3em}
+@media (max-width:520px){table.wt{font-size:14px} table.wt.kort th:first-child,table.wt.kort td:first-child{width:2.2em} table.wt th:first-child,table.wt td:first-child{width:5.2em;padding-right:4px} table.wt input{font-size:14px;padding:5px 0;border-radius:6px}}
 .gegeven{font-weight:700;color:var(--paars)}
 /* stappen */
 .stappen{display:grid;gap:10px;margin:12px 0}
@@ -363,7 +365,7 @@ const G30 = {x: [-1, 3], y: [-6, 8], xs: 1, ys: 1, labY: 2, lx: 'd', ly: 'f'};
 
 function formuleKaart(titel, regels){ return `<div class="kaart formule"><div class="kl">${titel}</div>${regels.map(r => `<div>${fmtF(r)}</div>`).join('')}</div>`; }
 function formuleLijst(titel, regels){ return `<div class="kaart"><div class="kl">${titel}</div><div class="formulelijst">${regels.map(([n, f]) => `<div><span class="nr">${n}</span>${fmtF(f)}</div>`).join('')}</div></div>`; }
-function statTabel(h, xs, ys){ return `<div class="tabel-wrap"><table class="wt"><tr><th>${fmtF(h[0])}</th>${xs.map(x => `<th>${String(x).replace('-', '−')}</th>`).join('')}</tr><tr><th>${fmtF(h[1])}</th>${ys.map(y => `<td class="gegeven">${y == null ? '…' : String(y).replace('-', '−')}</td>`).join('')}</tr></table></div>`; }
+function statTabel(h, xs, ys){ return `<div class="tabel-wrap"><table class="wt${h.every(k => k.length <= 3) ? ' kort' : ''}"><tr><th>${fmtF(h[0])}</th>${xs.map(x => `<th>${String(x).replace('-', '−')}</th>`).join('')}</tr><tr><th>${fmtF(h[1])}</th>${ys.map(y => `<td class="gegeven">${y == null ? '…' : String(y).replace('-', '−')}</td>`).join('')}</tr></table></div>`; }
 
 const CTX = {
   c19: {intro: ['Harm is zijn bad aan het vullen.', 'Om 9 uur zit er al 40 liter water in het bad.', 'Elke minuut komt daar 10 liter bij.', 'De formule hierbij is tijd × 10 + 40 = aantal liters.'],
@@ -636,7 +638,7 @@ function toonVraag(it){
     inv.innerHTML = Array.from({length: n}, (_, k) => `<div class="antw-rij"><label for="a${k}">${n > 1 ? 'Manier ' + (k + 1) + ':' : 'Formule:'}</label><input class="inv breed" id="a${k}" autocomplete="off" spellcheck="false" placeholder="${it.begin ? it.begin + ' = …' : 'typ de formule'}"></div>`).join('')
       + `<div class="pogingen">Typ een min als - en een keer als * of ×.</div>`;
   } else if (it.type === 'tabel'){
-    inv.innerHTML = `<div class="tabel-wrap"><table class="wt"><tr><th>${fmtF(it.kop[0])}</th>${it.xs.map(x => `<th>${String(x).replace('-', '−')}</th>`).join('')}</tr>
+    inv.innerHTML = `<div class="tabel-wrap"><table class="wt${it.kop.every(k => k.length <= 3) ? ' kort' : ''}"><tr><th>${fmtF(it.kop[0])}</th>${it.xs.map(x => `<th>${String(x).replace('-', '−')}</th>`).join('')}</tr>
       <tr><th>${fmtF(it.kop[1])}</th>${it.ans.map((a, k) => (it.gegeven || []).includes(k) ? `<td class="gegeven">${String(a).replace('-', '−')}</td>` : `<td><input id="c${k}" inputmode="decimal" autocomplete="off" aria-label="${esc(it.kop[1])} bij ${esc(it.kop[0])} = ${it.xs[k]}"></td>`).join('')}</tr></table></div>`;
   } else if (it.type === 'stappen'){
     const vak = (id, lab) => `<input class="inv vak" id="${id}" inputmode="decimal" autocomplete="off" aria-label="${esc(lab)}">`;
