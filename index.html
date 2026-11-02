@@ -184,15 +184,21 @@ function fmtF(s){ // formule: ook woordvariabelen cursief
 function zinnen(lines){ return lines.map(l => l === '' ? '<div class="witregel"></div>' : `<span class="zin">${fmtF(l)}</span>`).join(''); }
 function parseNum(v){
   if (v == null) return NaN;
-  let s = String(v).trim().replace(/€/g,'').replace(/\s+/g,'').replace(/[−–—]/g,'-').replace(',', '.');
-  if (s === '' || s === '-' ) return NaN;
-  if (!/^[-+]?\d*\.?\d+$/.test(s)) return NaN;
+  let s = String(v).trim().toLowerCase()
+    .replace(/[−–—‐‑]/g, '-')
+    .replace(/euro|€|liters?|l$|cm|uur|minuten|min$/g, '')
+    .replace(/[,.]-+$/, '')            // 21,- en 21.-
+    .replace(/\s+/g, '').replace(/^\+/, '')
+    .replace(/^-+/, m => m.length % 2 ? '-' : '');   // dubbele min-tekens getypt
+  if (/^-?\d+,\d+$/.test(s)) s = s.replace(',', '.');
+  if (s === '' || s === '-') return NaN;
+  if (!/^-?\d*\.?\d+$/.test(s)) return NaN;
   return Number(s);
 }
 function parseTijd(v){
-  const s = String(v).trim().toLowerCase().replace(/uur/g,'').replace(/\s+/g,'').replace(/[.u]/g, ':');
+  const s = String(v).trim().toLowerCase().replace(/^om/, '').replace(/uur/g, '').replace(/\s+/g, ':').replace(/[.u,;h]/g, ':').replace(/:+/g, ':').replace(/^:|:$/g, '');
   const m = s.match(/^(\d{1,2}):?(\d{2})$/);
-  if (!m) return null;
+  if (!m || +m[1] > 23 || +m[2] > 59) return null;
   return Number(m[1]) * 60 + Number(m[2]);
 }
 const nu = () => Date.now();
@@ -200,7 +206,13 @@ const sec = ms => Math.max(0, Math.round(ms / 1000));
 
 /* ---------- formule-parser (voor gelijkwaardigheid) ---------- */
 function normFormule(s){
-  return String(s).replace(/[−–—]/g,'-').replace(/[×·∙]/g,'*').replace(/:/g,'/').replace(/,/g,'.').replace(/\s+/g,'').toLowerCase();
+  return String(s).toLowerCase().replace(/^\s*dus\s*/, '').replace(/[−–—‐‑]/g,'-').replace(/[×·∙⋅]/g,'*').replace(/÷|:/g,'/').replace(/,/g,'.').replace(/\s+/g,'').replace(/\.$/, '').replace(/==+/g, '=');
+}
+// 'x' als keerteken als x geen letter in de formule is
+function normFormuleX(s, letters){
+  let n = normFormule(s);
+  if (!letters.includes('x')) n = n.replace(/x/g, '*');
+  return n;
 }
 function tokens(s){
   const out = []; let i = 0;
@@ -690,69 +702,92 @@ function toonStatus(it){
 function controleer(it){
   const s = st(it.id); if (s.opgelost) return;
   const w = verzamel(it); s.waarden = w;
-  let goed = false, cat = '', leeg = false;
+  let goed = false, cat = '', leeg = false, schrijf = '';
   const markeer = (id, ok) => { const e = document.getElementById(id); if (e){ e.classList.toggle('goed', ok); e.classList.toggle('fout', !ok); } };
+  const NUMMSG = 'Typ in elk vakje alleen een getal, bijvoorbeeld 90 of −7.';
   if (it.type === 'num'){
     const v = parseNum(w.a0); leeg = w.a0.trim() === '';
+    if (!leeg && isNaN(v)) schrijf = 'Typ alleen een getal, bijvoorbeeld 90 of −7.';
     goed = Math.abs(v - it.ans) < 1e-9;
-    if (!goed && !leeg){ cat = (it.fouten && it.fouten[String(v)]) || (isNaN(v) ? 'Geen getal ingevuld' : (Math.abs(v + it.ans) < 1e-9 ? 'Min-teken fout' : 'Rekenfout')); }
-    markeer('a0', goed);
+    if (!goed && !leeg){ cat = (it.fouten && it.fouten[String(v)]) || (Math.abs(v + it.ans) < 1e-9 ? 'Min-teken fout' : 'Rekenfout'); }
+    if (!schrijf) markeer('a0', goed);
   } else if (it.type === 'tijd'){
     leeg = w.a0.trim() === '';
     const v = parseTijd(w.a0); goed = v === parseTijd(it.ans);
-    if (!goed && !leeg){ const k = v == null ? '' : `${Math.floor(v / 60)}:${String(v % 60).padStart(2, '0')}`; cat = (it.fouten && it.fouten[k]) || (v == null ? 'Tijd niet goed genoteerd (gebruik bijv. 9:05)' : 'Afleesfout of rekenfout bij de tijd'); }
-    markeer('a0', goed);
+    if (!leeg && v == null) schrijf = 'Schrijf de tijd zo: 9:30 (uren, dubbele punt, minuten).';
+    if (!goed && !leeg){ const k = v == null ? '' : `${Math.floor(v / 60)}:${String(v % 60).padStart(2, '0')}`; cat = (it.fouten && it.fouten[k]) || 'Afleesfout of rekenfout bij de tijd'; }
+    if (!schrijf) markeer('a0', goed);
   } else if (it.type === 'tabel'){
-    let fout = 0, min = 0; leeg = true;
-    it.ans.forEach((a, k) => { if ((it.gegeven || []).includes(k)) return; const v = parseNum(w['c' + k]); if (w['c' + k].trim() !== '') leeg = false;
-      const ok = Math.abs(v - a) < 1e-9; markeer('c' + k, ok); if (!ok){ fout++; if (Math.abs(v + a) < 1e-9 && a !== 0) min++; } });
+    let fout = 0, min = 0, leegVak = 0, onleesbaar = 0; leeg = true; const res = [];
+    it.ans.forEach((a, k) => { if ((it.gegeven || []).includes(k)) return; const raw = w['c' + k]; const v = parseNum(raw);
+      if (raw.trim() === '') leegVak++; else { leeg = false; if (isNaN(v)) onleesbaar++; }
+      const ok = Math.abs(v - a) < 1e-9; res.push(['c' + k, ok]); if (!ok){ fout++; if (Math.abs(v + a) < 1e-9 && a !== 0) min++; } });
+    if (!leeg && onleesbaar) schrijf = NUMMSG; else if (!leeg && leegVak) schrijf = 'Vul eerst alle vakjes van de tabel in.';
+    if (!schrijf) res.forEach(([id, ok]) => markeer(id, ok));
     goed = fout === 0;
     if (!goed && !leeg) cat = min ? `Min-teken fout in de tabel (${fout} ${fout === 1 ? 'vakje' : 'vakjes'} fout)` : `Rekenfout in de tabel (${fout} ${fout === 1 ? 'vakje' : 'vakjes'} fout)`;
   } else if (it.type === 'stappen'){
-    let fout = 0; leeg = true; let eerste = '';
-    const getal = (id, ans, catVeld) => { const raw = w[id] || ''; const v = parseNum(raw); if (raw.trim() !== '') leeg = false;
+    let fout = 0; leeg = true; let eerste = '', leegVak = 0, onleesbaar = 0, geenKeuze = 0; const res = [];
+    const getal = (id, ans, catVeld) => { const raw = w[id] || ''; const v = parseNum(raw);
+      if (raw.trim() === '') leegVak++; else { leeg = false; if (isNaN(v)) onleesbaar++; }
       const ok = Math.abs(v - ans) < 1e-9;
       if (!ok && !eerste && raw.trim() !== '') eerste = catVeld || (it.fouten && it.fouten[String(v)]) || (!isNaN(v) && Math.abs(v + ans) < 1e-9 && ans !== 0 ? 'Min-teken fout' : '');
-      markeer(id, ok); if (!ok) fout++; };
+      res.push([id, ok]); if (!ok) fout++; };
     it.velden.forEach((f, k) => {
       if (f.tpl){ f.ans.forEach((a, j) => getal(`a${k}_${j}`, a, f.invul && j === 0 ? 'Verkeerd getal ingevuld in de formule' : '')); return; }
-      if (f.soort === 'keuze'){ const raw = w['a' + k]; const ok = +raw === f.ans; if (+raw !== 0) leeg = false; if (!ok && !eerste) eerste = 'Verkeerde grafiek gekozen'; markeer('a' + k, ok); if (!ok) fout++; }
+      if (f.soort === 'keuze'){ const raw = w['a' + k]; const ok = +raw === f.ans; if (+raw === 0) geenKeuze++; else leeg = false; if (!ok && !eerste && +raw !== 0) eerste = 'Verkeerde grafiek gekozen'; res.push(['a' + k, ok]); if (!ok) fout++; }
       else getal('a' + k, f.ans);
     });
+    if (!leeg && onleesbaar) schrijf = NUMMSG; else if (!leeg && leegVak) schrijf = 'Vul eerst alle vakjes in.'; else if (!leeg && geenKeuze) schrijf = 'Kies ook een grafiek.';
+    if (!schrijf) res.forEach(([id, ok]) => markeer(id, ok));
     goed = fout === 0; if (!goed && !leeg) cat = eerste || 'Rekenfout in een tussenstap';
   } else if (it.type === 'mk'){
     const k = (s.keuze || []).slice().sort(); leeg = k.length === 0;
     const ans = (it.multi ? it.ans : [it.ans]).slice().sort();
+    if (!leeg && it.multi && k.length !== ans.length) schrijf = `Kies ${ans.length} antwoorden.`;
     goed = k.length === ans.length && k.every((v, i) => v === ans[i]);
-    document.querySelectorAll('.optie').forEach(x => { x.classList.remove('goed', 'fout'); if (k.includes(+x.dataset.k)) x.classList.add(goed ? 'goed' : 'fout'); });
-    if (!goed && !leeg) cat = it.multi && k.length !== ans.length ? `Niet het goede aantal antwoorden gekozen (kies er ${ans.length})` : 'Verkeerde keuze gemaakt';
+    if (!schrijf) document.querySelectorAll('.optie').forEach(x => { x.classList.remove('goed', 'fout'); if (k.includes(+x.dataset.k)) x.classList.add(goed ? 'goed' : 'fout'); });
+    if (!goed && !leeg) cat = 'Verkeerde keuze gemaakt';
   } else if (it.type === 'formule'){
-    const n = it.aantal || 1; const ok = []; leeg = true; const gezien = new Set([normFormule(it.orig.replace(/\*/g, '×'))]);
+    const n = it.aantal || 1; const ok = []; leeg = true; const res = [];
+    const uit = vergelijking(it.orig).uit; const letters = it.vars.concat(uit);
+    const gezien = new Set([normFormule(it.orig)]);
+    let leegVak = 0;
     for (let k = 0; k < n; k++){
-      const raw = w['a' + k] || ''; if (raw.trim()) leeg = false;
+      const raw = w['a' + k] || ''; if (raw.trim()) leeg = false; else { leegVak++; ok.push(false); res.push(['a' + k, false]); continue; }
       let r = false, c = '';
-      try {
-        const nf = normFormule(raw);
-        if (!raw.trim()) c = 'Niets ingevuld';
-        else if (it.zonderKeer && /\*/.test(nf)) c = '×-teken niet weggelaten';
-        else if (n > 1 && (nf === normFormule(it.orig) || gezien.has(nf))) c = 'Zelfde formule als de gegeven formule (of twee keer dezelfde)';
-        else if (it.begin && !nf.startsWith(it.begin + '=')) c = `Begin met ${it.begin} =`;
-        else if (it.moetStarten && !nf.startsWith(it.begin + '=' + it.moetStarten)) c = 'Wat links en rechts van het + teken staat is niet verwisseld';
-        else if (gelijkwaardig(it.orig, raw, it.vars)) r = true;
-        else c = (/\(/.test(it.orig) && !/\(/.test(nf)) ? 'Haakjes vergeten' : 'Formule is niet gelijkwaardig aan de gegeven formule';
-        gezien.add(nf);
-      } catch (e) { c = /var:/.test(e.message) ? 'Verkeerde letter gebruikt' : 'Formule niet goed opgeschreven'; }
-      markeer('a' + k, r); ok.push(r); if (!r && !cat && raw.trim()) cat = c;
+      const nf = normFormuleX(raw, letters);
+      const vreemd = (nf.match(/[a-z]/g) || []).filter(l => !letters.includes(l));
+      if ((nf.match(/=/g) || []).length !== 1){ if (!schrijf) schrijf = `Een formule heeft één = teken. Bijvoorbeeld: ${it.begin || uit} = …`; }
+      else if (vreemd.length){ if (!schrijf) schrijf = `Gebruik alleen de letters ${letters.join(' en ')}. Je typte: ${[...new Set(vreemd)].join(', ')}.`; }
+      else if ((nf.match(/\(/g) || []).length !== (nf.match(/\)/g) || []).length){ if (!schrijf) schrijf = 'Er ontbreekt een haakje. Controleer of elk ( ook een ) heeft.'; }
+      else {
+        try {
+          vergelijking(nf);
+          if (it.zonderKeer && /\*/.test(nf)) c = '×-teken niet weggelaten';
+          else if (n > 1 && (nf === normFormule(it.orig) || gezien.has(nf))) c = 'Zelfde formule als de gegeven formule (of twee keer dezelfde)';
+          else if (it.begin && !nf.startsWith(it.begin + '=')) c = `Begin met ${it.begin} =`;
+          else if (it.moetStarten && !nf.startsWith(it.begin + '=' + it.moetStarten)) c = 'Wat links en rechts van het + teken staat is niet verwisseld';
+          else if (gelijkwaardig(it.orig, nf, it.vars)) r = true;
+          else c = (/\(/.test(it.orig) && !/\(/.test(nf)) ? 'Haakjes vergeten' : 'Formule is niet gelijkwaardig aan de gegeven formule';
+          gezien.add(nf);
+        } catch (e) { if (!schrijf) schrijf = `Deze formule kan ik niet lezen. Schrijf hem bijvoorbeeld zo: ${it.begin || uit} = …`; }
+      }
+      res.push(['a' + k, r]); ok.push(r); if (!r && !cat) cat = c;
     }
+    if (!schrijf && !leeg && leegVak) schrijf = n > 1 ? 'Vul beide manieren in.' : '';
+    if (!schrijf) res.forEach(([id, r]) => markeer(id, r));
     goed = ok.every(Boolean);
   } else if (it.type === 'grafiek'){
     const pts = s.invoer || []; leeg = pts.length === 0;
     const fout = pts.filter(([x, y]) => Math.abs(it.f(x) - y) > 1e-9);
+    if (!leeg && pts.length < it.min && !fout.length) schrijf = `Zet minstens ${it.min} punten.`;
     goed = pts.length >= it.min && fout.length === 0;
-    if (!goed && !leeg) cat = fout.length ? `Punt ligt niet op de grafiek (${fout.map(p => '(' + p.join(', ') + ')').join(' ').replace(/-/g, '−')})` : `Te weinig punten gezet (minstens ${it.min})`;
+    if (!goed && !leeg) cat = `Punt ligt niet op de grafiek (${fout.map(p => '(' + p.join(', ') + ')').join(' ').replace(/-/g, '−')})`;
   }
   const fb = $('#feedback');
   if (leeg){ fb.className = 'feedback info'; fb.textContent = 'Vul eerst een antwoord in.'; return; }
+  if (schrijf){ fb.className = 'feedback info'; fb.innerHTML = `${fmtF(schrijf)}<br><span style="font-weight:500">Dit telt niet als fout. Pas het aan en klik opnieuw op Controleer.</span>`; return; }
   const t = nu(); const dt = t - (s.laatste || t); s.laatste = t;
   s.pogingen.push({goed, cat, ms: dt, keuze: it.type === 'mk' ? (s.keuze || []).slice() : undefined, hint: s.hint});
   s.tijd = t - s.gezien;
