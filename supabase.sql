@@ -52,7 +52,7 @@ create index if not exists resultaten_klas_idx on public.resultaten (klas, creat
 create table if not exists public.docenten (email text primary key);
 alter table public.docenten enable row level security;
 -- vervang door je eigen e-mailadres (en voeg collega's toe)
-insert into public.docenten (email) values ('miekevankemenade@gmail.com') on conflict do nothing;
+insert into public.docenten (email) values ('mieke.van.kemenade@ozhw.nl') on conflict do nothing;
 
 create or replace function public.is_docent() returns boolean
 language sql stable security definer set search_path = public as $$
