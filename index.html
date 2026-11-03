@@ -125,6 +125,10 @@ input.inv.vak{width:84px;text-align:center;font-size:20px;padding:6px 4px}
 .formulelijst{display:grid;gap:10px;font-size:24px;color:var(--paars);font-weight:600}
 .formulelijst .nr{color:var(--roze);font-weight:800;margin-right:10px}
 svg.graf{width:100%;max-width:560px;height:auto;touch-action:manipulation;user-select:none}
+main.groot{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr)}
+main.groot .links{padding:12px 16px;gap:8px}
+main.groot svg.graf{max-width:1120px;max-height:calc(100vh - 230px);max-height:calc(100dvh - 230px)}
+@media (max-width:860px){main.groot{grid-template-columns:1fr}main.groot svg.graf{max-height:none}}
 svg.graf .klik{cursor:crosshair}
 .graf-uitleg{font-size:14px;color:var(--zacht);text-align:center;max-width:520px}
 video{width:100%;max-width:820px;border-radius:14px;background:#000;box-shadow:0 8px 30px rgba(94,6,150,.18)}
@@ -411,7 +415,7 @@ function maakGrafiek(cfg, opties = {}){
     if (sny < gs) for (let v = y0; v <= y1 + 1e-9; v += sny) el('line', {x1: X(x0), x2: X(x1), y1: Y(v), y2: Y(v), stroke: '#F1E8F8', 'stroke-width': 1, 'stroke-dasharray': '3 4'});
     const laag = document.createElementNS(ns, 'g'); svg.appendChild(laag);
     const spook = document.createElementNS(ns, 'g'); spook.setAttribute('pointer-events', 'none'); spook.style.display = 'none'; svg.appendChild(spook);
-    spook.innerHTML = `<line class="hx" stroke="#45EDFF" stroke-width="2" stroke-dasharray="4 4"/><line class="hy" stroke="#45EDFF" stroke-width="2" stroke-dasharray="4 4"/><circle r="9" fill="none" stroke="#E924D5" stroke-width="3"/><rect rx="8" fill="#5E0696"/><text font-size="15" font-weight="700" fill="#fff" font-family="Montserrat"></text>`;
+    spook.innerHTML = `<line class="hx" stroke="none"/><line class="hy" stroke="none"/><circle r="9" fill="none" stroke="#E924D5" stroke-width="3"/><rect rx="8" fill="#5E0696"/><text font-size="15" font-weight="700" fill="#fff" font-family="Montserrat"></text>`;
     const vang = el('rect', {x: m.l - 14, y: m.t - 14, width: W - m.l - m.r + 28, height: H - m.t - m.b + 28, fill: 'transparent', class: 'klik'});
     const naarPunt = ev => {
       const pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
@@ -429,9 +433,9 @@ function maakGrafiek(cfg, opties = {}){
       hx.setAttribute('x1', X(Math.min(Math.max(0, x0), x1))); hx.setAttribute('x2', cx); hx.setAttribute('y1', cy); hx.setAttribute('y2', cy);
       hy.setAttribute('x1', cx); hy.setAttribute('x2', cx); hy.setAttribute('y1', Y(Math.min(Math.max(0, y0), y1))); hy.setAttribute('y2', cy);
       spook.querySelector('circle').setAttribute('cx', cx); spook.querySelector('circle').setAttribute('cy', cy);
-      const t = spook.querySelector('text'); t.textContent = `(${px}, ${py})`.replace(/-/g, '−');
+      const t = spook.querySelector('text'); t.textContent = '';
       const bw = t.textContent.length * 9 + 14, bx = cx + 14 + bw > W ? cx - 14 - bw : cx + 14, by = cy - 40 < 0 ? cy + 12 : cy - 40;
-      const r = spook.querySelector('rect'); r.setAttribute('x', bx); r.setAttribute('y', by); r.setAttribute('width', bw); r.setAttribute('height', 28);
+      const r = spook.querySelector('rect'); r.setAttribute('display', 'none'); r.setAttribute('x', bx); r.setAttribute('y', by); r.setAttribute('width', bw); r.setAttribute('height', 28);
       t.setAttribute('x', bx + 7); t.setAttribute('y', by + 19);
     };
     vang.addEventListener('pointermove', ev => toonSpook(naarPunt(ev)));
@@ -446,7 +450,7 @@ function maakGrafiek(cfg, opties = {}){
         laag.appendChild(ln);
       }
       pts.forEach(([px, py]) => { const c = document.createElementNS(ns, 'circle'); c.setAttribute('cx', X(px)); c.setAttribute('cy', Y(py)); c.setAttribute('r', 7); c.setAttribute('fill', opties.kleurPunt ? opties.kleurPunt(px, py) : '#5E0696'); laag.appendChild(c);
-        const t = document.createElementNS(ns, 'text'); t.setAttribute('x', X(px) + 10); t.setAttribute('y', Y(py) + 20); t.setAttribute('font-size', 12); t.setAttribute('font-weight', 700); t.setAttribute('fill', '#5E0696'); t.setAttribute('font-family', 'Montserrat'); t.textContent = `(${px}, ${py})`.replace(/-/g, '−'); laag.appendChild(t); });
+        const t = document.createElementNS(ns, 'text'); t.setAttribute('x', X(px) + 10); t.setAttribute('y', Y(py) + 20); t.setAttribute('font-size', 12); t.setAttribute('font-weight', 700); t.setAttribute('fill', '#5E0696'); t.setAttribute('font-family', 'Montserrat'); laag.appendChild(t); });
     };
     const wissel = (px, py) => {
       const pts = opties.punt(); const i = pts.findIndex(p => p[0] === px && p[1] === py);
@@ -743,31 +747,17 @@ function toonVraag(it){
    </section>`;
   // linkerkant
   const links = $('#links');
+  $('#main').classList.toggle('groot', it.type === 'grafiek' || !!it.graf || !!ctx.graf);
   if (it.type === 'grafiek'){
     s.invoer = s.invoer || [];
     const svg = maakGrafiek(it.g, {interactief: true, punt: () => s.invoer, slot: () => s.opgelost, bijWijziging: bewaar,
       kleurPunt: (x, y) => s.opgelost ? '#16965A' : '#5E0696'});
     links.appendChild(svg);
-    links.insertAdjacentHTML('beforeend', `<div class="graf-uitleg">Beweeg over het rooster: je ziet waar je punt komt. Klik om het punt te zetten. Klik er nog een keer op om het weg te halen.</div>
-      <div class="antw-rij" style="justify-content:center;margin:0"><span>Of typ een punt:</span>
-        <label for="px">${esc(it.g.lx.split(' ')[0])} =</label><input class="inv" id="px" inputmode="decimal" style="width:80px" autocomplete="off">
-        <label for="py">${esc(it.g.ly.split(' ')[0] === 'aantal' ? 'liters' : it.g.ly.split(' ')[0])} =</label><input class="inv" id="py" inputmode="decimal" style="width:80px" autocomplete="off">
-        <button class="knop paars" id="zetPunt">Zet punt</button></div>
+    links.insertAdjacentHTML('beforeend', `<div class="graf-uitleg">Klik op het rooster om een punt te zetten.<br>Klik er nog een keer op om het weg te halen.</div>
       <div class="graf-uitleg" id="puntMelding" role="status"></div>
       <button class="knop licht" id="wis">Alles wissen</button>`);
     $('#wis').onclick = () => { if (s.opgelost) return; s.invoer.length = 0; svg._teken(); bewaar(); };
-    const zet = () => {
-      if (s.opgelost) return;
-      const x = parseNum($('#px').value), y = parseNum($('#py').value), g = it.g, [snx, sny] = svg._snap, mld = $('#puntMelding');
-      if (isNaN(x) || isNaN(y)){ mld.textContent = 'Vul bij allebei een getal in.'; return; }
-      if (x < g.x[0] || x > g.x[1] || y < g.y[0] || y > g.y[1]){ mld.textContent = 'Dat punt valt buiten het assenstelsel.'; return; }
-      if (Math.abs(x / snx - Math.round(x / snx)) > 1e-9 || Math.abs(y / sny - Math.round(y / sny)) > 1e-9){ mld.textContent = `Kies een punt op het rooster (stappen van ${snx} en ${sny}).`; return; }
-      if (s.invoer.some(p => p[0] === x && p[1] === y)){ mld.textContent = 'Dat punt staat er al.'; return; }
-      svg._wissel(x, y); mld.textContent = `Punt (${x}, ${y}) gezet.`.replace(/-/g, '−'); $('#px').value = ''; $('#py').value = ''; $('#px').focus();
-    };
-    $('#zetPunt').onclick = zet;
-    $('#py').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); zet(); } });
-    if (it.bron) toonBronTabellen(it, s, svg);
+    if (it.bron) toonBronTabellen(it);
   } else if (it.graf){ links.appendChild(it.graf()); }
   else if (ctx.graf){ links.appendChild(ctx.graf()); }
   else { links.innerHTML = ctx.links(); }
@@ -833,7 +823,7 @@ function toonStatus(it){
 
 
 /* ---------- tabel van de vorige vraag bij een grafiekopdracht ---------- */
-function toonBronTabellen(it, s, svg){
+function toonBronTabellen(it){
   const vak = $('#bronTabellen'); if (!vak) return;
   vak.innerHTML = it.bron.map(bid => {
     const b = ITEMS.find(x => x.id === bid); if (!b) return '';
@@ -848,25 +838,13 @@ function toonBronTabellen(it, s, svg){
       <div class="tabel-wrap"><table class="wt bron-tabel${b.kop.every(k => k.length <= 3) ? ' kort' : ''}">
         <tr><th>${fmtF(b.kop[0])}</th>${b.xs.map((x, k) => `<th>${String(x).replace('-', '−')}</th>`).join('')}</tr>
         <tr><th>${fmtF(b.kop[1])}</th>${ys.map((y, k) => y == null ? '<td class="leeg">…</td>'
-          : `<td><button class="zet-uit-tabel" data-x="${b.xs[k]}" data-y="${y}" title="Zet dit punt in de grafiek" aria-label="Zet punt (${b.xs[k]}, ${y})">${String(y).replace('-', '−')}</button></td>`).join('')}</tr>
+          : `<td class="gegeven">${String(y).replace('-', '−')}</td>`).join('')}</tr>
       </table></div>
       ${af ? '' : `<div class="bron-let">Let op: opdracht ${esc(naam)} is nog niet goed af. <button class="knop-tekst" data-ga="${esc(bid)}">Ga naar ${esc(naam)}</button></div>`}
     </div>`;
-  }).join('') + '<div class="graf-uitleg" style="text-align:left">Tip: klik op een getal in de tabel. Dan komt dat punt in de grafiek.</div>';
-  const markeer = () => vak.querySelectorAll('.zet-uit-tabel').forEach(btn => btn.classList.toggle('gezet', (s.invoer || []).some(p => p[0] === +btn.dataset.x && p[1] === +btn.dataset.y)));
-  vak.querySelectorAll('.zet-uit-tabel').forEach(btn => btn.onclick = () => {
-    if (s.opgelost) return;
-    const x = +btn.dataset.x, y = +btn.dataset.y, g = it.g, mld = $('#puntMelding');
-    if (x < g.x[0] || x > g.x[1] || y < g.y[0] || y > g.y[1]){ if (mld) mld.textContent = 'Dat punt past niet in dit assenstelsel.'; return; }
-    svg._wissel(x, y); markeer();
-    if (mld) mld.textContent = (s.invoer.some(p => p[0] === x && p[1] === y) ? `Punt (${x}, ${y}) gezet.` : `Punt (${x}, ${y}) weggehaald.`).replace(/-/g, '−');
-  });
+  }).join('');
   vak.querySelectorAll('[data-ga]').forEach(b => b.onclick = () => ga(ITEMS.findIndex(x => x.id === b.dataset.ga)));
-  markeer();
-  // ook bijwerken als er in de grafiek zelf geklikt wordt
-  svg.addEventListener('click', () => setTimeout(markeer, 0));
-  const zp = $('#zetPunt'); if (zp) zp.addEventListener('click', () => setTimeout(markeer, 0));
-  const wis = $('#wis'); if (wis) wis.addEventListener('click', () => setTimeout(markeer, 0));
+
 }
 /* ---------- nakijken ---------- */
 function controleer(it){
