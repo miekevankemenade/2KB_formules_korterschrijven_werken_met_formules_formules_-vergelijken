@@ -16,7 +16,7 @@
 *{box-sizing:border-box}
 .app>*{min-width:0}
 html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--tekst);font-family:var(--font);font-size:17px;line-height:1.55}
+body{margin:0;background:var(--bg);color:var(--tekst);font-family:var(--font);font-size:12pt;line-height:1.5}
 button,input,select{font-family:inherit;font-size:inherit}
 i,.var{font-style:italic;font-weight:600}
 .app{display:grid;grid-template-rows:auto auto 1fr auto;height:100vh;height:100dvh}
@@ -52,9 +52,9 @@ main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:0
 .label-domein{display:inline-block;font-size:12px;font-weight:600;color:var(--paars);background:var(--paars-licht);border-radius:12px;padding:3px 10px;margin-bottom:10px}
 .opdr-nr{display:flex;align-items:baseline;gap:12px;margin:0 0 8px}
 .opdr-nr b{font-size:34px;font-weight:800;color:var(--roze);line-height:1}
-.opdr-nr span{font-size:20px;font-weight:700;color:var(--paars)}
+.opdr-nr span{font-size:15pt;font-weight:700;color:var(--paars)}
 .zin{display:block;margin-bottom:2px}
-.formuleregel{font-size:22px;font-weight:600;color:var(--paars);margin:6px 0}
+.formuleregel{font-size:13.5pt;font-weight:600;color:var(--paars);margin:6px 0}
 .blok{margin-bottom:18px}
 .vraag{font-weight:600;color:var(--paars)}
 .witregel{height:18px}
@@ -114,21 +114,21 @@ td.leeg{color:var(--zacht)}
 .stap{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .stap .lab{min-width:170px;font-weight:600}
 .stap input{width:120px}
-.formulestap{font-size:22px;font-weight:600;color:var(--paars);gap:6px}
-.stap.start{font-size:22px;font-weight:600;color:var(--paars);margin-top:8px}
-input.inv.vak{width:84px;text-align:center;font-size:20px;padding:6px 4px}
+.formulestap{font-size:13.5pt;font-weight:600;color:var(--paars);gap:6px}
+.stap.start{font-size:13.5pt;font-weight:600;color:var(--paars);margin-top:8px}
+input.inv.vak{width:76px;text-align:center;font-size:12pt;padding:6px 4px}
 .stap select{border:2px solid var(--lijn);border-radius:10px;padding:9px 10px;background:#fff}
 /* visueel links */
 .kaart{background:var(--bg);border:2px solid var(--lijn);border-radius:18px;padding:22px 26px;max-width:100%}
-.kaart.formule{font-size:30px;font-weight:600;color:var(--paars);text-align:center}
+.kaart.formule{font-size:20px;font-weight:600;color:var(--paars);text-align:center}
 .kaart .kl{font-size:14px;font-weight:700;color:var(--roze);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
-.formulelijst{display:grid;gap:10px;font-size:24px;color:var(--paars);font-weight:600}
+.formulelijst{display:grid;gap:8px;font-size:16pt;color:var(--paars);font-weight:600}
 .formulelijst .nr{color:var(--roze);font-weight:800;margin-right:10px}
 svg.graf{width:100%;max-width:560px;height:auto;touch-action:manipulation;user-select:none}
-main.groot{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}
+main.groot{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
 main.groot .links{padding:12px 16px;gap:6px;justify-content:center}
-main.groot svg.graf{max-width:760px;max-height:calc(100vh - 230px);max-height:calc(100dvh - 230px)}
-main.groot .links:has(.bron-boven) svg.graf{max-height:calc(100vh - 330px);max-height:calc(100dvh - 330px)}
+main.groot svg.graf{max-width:900px;max-height:calc(100vh - 200px);max-height:calc(100dvh - 200px)}
+main.groot .links:has(.bron-boven) svg.graf{max-height:calc(100vh - 290px);max-height:calc(100dvh - 290px)}
 .bron-boven{width:100%;max-width:640px}
 .bron-boven .bron{margin:0;padding:6px 10px}
 .bron-boven .bron-kop{font-size:13px}
