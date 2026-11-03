@@ -99,6 +99,15 @@ table.wt input.goed{border-color:var(--goed);background:#eaf8f1}
 table.wt input.fout{border-color:var(--fout);background:#fdeced}
 table.wt.kort th:first-child,table.wt.kort td:first-child{width:3em}
 @media (max-width:520px){table.wt{font-size:14px} table.wt.kort th:first-child,table.wt.kort td:first-child{width:2.2em} table.wt th:first-child,table.wt td:first-child{width:5.2em;padding-right:4px} table.wt input{font-size:14px;padding:5px 0;border-radius:6px}}
+.bron{background:var(--bg);border:2px solid var(--lijn);border-radius:14px;padding:10px 12px;margin:10px 0}
+.bron-kop{font-weight:700;color:var(--roze);font-size:14px;margin-bottom:2px}
+.bron-tabel td{padding:3px 2px}
+.zet-uit-tabel{width:100%;max-width:64px;border:2px solid var(--lijn);background:#fff;border-radius:8px;padding:5px 0;font-weight:700;color:var(--tekst);cursor:pointer;font-family:inherit;font-size:inherit}
+.zet-uit-tabel:hover{border-color:var(--roze)}
+.zet-uit-tabel.gezet{background:var(--paars);border-color:var(--paars);color:#fff}
+td.leeg{color:var(--zacht)}
+.bron-let{font-size:13px;color:var(--fout);margin-top:4px}
+.knop-tekst{border:0;background:none;color:var(--paars);font-weight:700;text-decoration:underline;cursor:pointer;font-family:inherit;font-size:inherit;padding:0}
 .gegeven{font-weight:700;color:var(--paars)}
 /* stappen */
 .stappen{display:grid;gap:10px;margin:12px 0}
@@ -512,7 +521,7 @@ const SECTIES = [
    hint: ['Een negatieve tijd is een tijd vóór 9:00 uur.'], uitleg: ['tijd = 0 is 9:00 uur', 'tijd = −1 is 8:59 uur', 'tijd = −3 is drie minuten vóór negen: 8:57 uur']},
   {id: '20b', nr: '20', deel: 'b', ctx: 'c20', dom: D4, vraag: ['Vul de tabel in.', 'Gebruik de formule.'], type: 'tabel', kop: ['tijd in minuten', 'aantal liters'], xs: [-3, -2, -1, 0, 1, 2], ans: [10, 20, 30, 40, 50, 60], gegeven: [3],
    hint: ['Vul tijd = −1 in: −1 × 10 + 40 = …', '−1 × 10 = −10'], uitleg: ['tijd = −3: −3 × 10 + 40 = −30 + 40 = 10', 'tijd = −2: −20 + 40 = 20', 'tijd = −1: −10 + 40 = 30'], fouten: {}},
-  {id: '20c', nr: '20', deel: 'c', ctx: 'c20', dom: D4v, vraag: ['Teken de grafiek.', 'Gebruik de punten uit de tabellen van 19c en 20b.', 'Klik op minstens 2 punten.', 'Verkeerd punt?', 'Klik er nog een keer op.'], type: 'grafiek', g: G20, f: t => 10 * t + 40, min: 2,
+  {id: '20c', nr: '20', deel: 'c', ctx: 'c20', dom: D4v, vraag: ['Teken de grafiek.', 'Gebruik de punten uit de tabellen van 19c en 20b.', 'Klik op minstens 2 punten.', 'Verkeerd punt?', 'Klik er nog een keer op.'], bron: ['19c', '20b'], type: 'grafiek', g: G20, f: t => 10 * t + 40, min: 2,
    hint: ['Gebruik punten uit de tabellen.', 'Bijvoorbeeld (0, 40) en (2, 60).'], uitleg: ['Punt (−3, 10)', 'Punt (0, 40)', 'Punt (5, 90)', 'Trek een rechte lijn door de punten.']},
   {id: '20d', nr: '20', deel: 'd', ctx: 'c20', dom: D4v, vraag: ['Eerst was het bad leeg.', 'Hoe laat is Harm begonnen?'], type: 'tijd', ans: '8:56', graf: () => maakGrafiek(G20, {lijnen: [{f: t => 10 * t + 40}]}),
    hint: ['Het bad was leeg: aantal liters = 0.', 'Bij welke tijd raakt de grafiek de horizontale as?'], uitleg: ['Aantal liters = 0 bij tijd = −4', 'tijd = −4 is 4 minuten vóór 9:00 uur', 'Harm is om 8:56 uur begonnen.'], fouten: {'9:04': 'Negatieve tijd als ná 9:00 gelezen', '8:54': 'Afleesfout op de horizontale as'}},
@@ -525,7 +534,7 @@ const SECTIES = [
    hint: ['Vul −1 in op de plek van t.', 'Eerst keer, dan min.', 'Min min wordt plus.'], uitleg: ['6 − 2 × t = w', '6 − 2 × −1 = w', '6 − −2 = 8', 'Dus w = 8.'], fouten: {'4': 'Min min wordt plus vergeten', '2': 'Min-teken fout'}},
   {id: '22b', nr: '22', deel: 'b', ctx: 'c22', dom: D4, vraag: ['Vul de tabel in.'], type: 'tabel', kop: ['t', 'w'], xs: [-3, -2, -1, 0, 1, 2, 3, 4], ans: [12, 10, 8, 6, 4, 2, 0, -2], gegeven: [2],
    hint: ['Vul t = 0 in: 6 − 2 × 0 = 6.', 'Elke stap naar rechts wordt w 2 kleiner.'], uitleg: ['t = −3: 6 − 2 × −3 = 6 + 6 = 12', 't = 1: 6 − 2 × 1 = 4', 't = 4: 6 − 2 × 4 = −2']},
-  {id: '22c', nr: '22', deel: 'c', ctx: 'c22', dom: D4v, vraag: ['Teken de grafiek bij de tabel.', 'Klik op minstens 3 punten.'], type: 'grafiek', g: G22, f: t => 6 - 2 * t, min: 3,
+  {id: '22c', nr: '22', deel: 'c', ctx: 'c22', dom: D4v, vraag: ['Teken de grafiek bij de tabel.', 'Klik op minstens 3 punten.'], bron: ['22b'], type: 'grafiek', g: G22, f: t => 6 - 2 * t, min: 3,
    hint: ['Gebruik de punten uit 22b, bijvoorbeeld (0, 6) en (1, 4).'], uitleg: ['Punt (−3, 12)', 'Punt (0, 6)', 'Punt (4, −2)', 'De grafiek gaat naar beneden.']},
   {theorie: true, id: 'T24k', titel: 'Formules korter schrijven', video: 'videos/theorie_24_korter_schrijven.mp4', tekst: ['Je kunt een formule <b>korter schrijven</b>.', 'Laat het × weg tussen een getal en een letter.', 'Voorbeeld: 6 × k wordt 6k.']},
   {id: '23a', nr: '23', deel: 'a', ctx: 'c23', dom: D4w, vraag: ['Schrijf korter:', 'F:7 × p − 10 = q'], type: 'formule', orig: '7*p-10=q', vars: ['p'], zonderKeer: true,
@@ -548,7 +557,7 @@ const SECTIES = [
    hint: ['Vul a = 2 in.', '2 − 4 is negatief.'], uitleg: ['3,50(2 − 4) = w', '3,50 × −2 = −7', 'Dus w = −7.', 'Ze heeft geen winst, maar een verlies van € 7,-.']},
   {id: '25d', nr: '25', deel: 'd', ctx: 'c25', dom: D4, vraag: ['Vul de tabel in.'], type: 'tabel', kop: ['a', 'w in euro\'s'], xs: [0, 2, 4, 6, 8, 10], ans: [-14, -7, 0, 7, 14, 21],
    hint: ['Gebruik 3,50(a − 4) = w.', 'a = 0: 3,50 × −4 = …'], uitleg: ['a = 0: 3,50 × −4 = −14', 'a = 4: 3,50 × 0 = 0', 'a = 10: 3,50 × 6 = 21']},
-  {id: '25e', nr: '25', deel: 'e', ctx: 'c25', dom: D4v, vraag: ['Teken de grafiek bij de tabel.', 'Klik op minstens 3 punten.'], type: 'grafiek', g: G25, f: a => 3.5 * (a - 4), min: 3,
+  {id: '25e', nr: '25', deel: 'e', ctx: 'c25', dom: D4v, vraag: ['Teken de grafiek bij de tabel.', 'Klik op minstens 3 punten.'], bron: ['25d'], type: 'grafiek', g: G25, f: a => 3.5 * (a - 4), min: 3,
    hint: ['Gebruik de punten uit 25d, bijvoorbeeld (4, 0) en (8, 14).'], uitleg: ['Punt (0, −14)', 'Punt (4, 0)', 'Punt (10, 21)', 'Trek een rechte lijn door de punten.']},
   {id: 'LD4a1', nr: 'Leerdoelen', deel: 'a❶', ctx: 'cLD4', dom: D4, vraag: ['Vul x = −5 in.', 'Bereken y.'], type: 'stappen', begin: '6x − 10 = y', velden: [{tpl: '6 × {} − 10 = y', ans: [-5], invul: true}, {tpl: '{} − 10 = {}', ans: [-30, -40]}, {tpl: 'Dus y = {}', ans: [-40]}],
    hint: ['6x betekent 6 × x.', '−30 − 10: nog verder naar links op de getallenlijn.'], uitleg: ['6 × −5 − 10 = y', '−30 − 10 = −40', 'Dus y = −40.'], fouten: {'-20': 'Min-teken fout bij aftrekken', '20': 'Min-teken fout'}},
@@ -721,6 +730,7 @@ function toonVraag(it){
      <div class="blok">${zinnen(ctx.intro)}</div>
      <div class="witregel"></div>
      <div class="blok vraag">${zinnen(it.vraag)}</div>
+     <div id="bronTabellen"></div>
      <div id="invoer"></div>
      <div class="knoppen">
        <button class="knop hoofd" id="controleer">Controleer</button>
@@ -757,6 +767,7 @@ function toonVraag(it){
     };
     $('#zetPunt').onclick = zet;
     $('#py').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); zet(); } });
+    if (it.bron) toonBronTabellen(it, s, svg);
   } else if (it.graf){ links.appendChild(it.graf()); }
   else if (ctx.graf){ links.appendChild(ctx.graf()); }
   else { links.innerHTML = ctx.links(); }
@@ -820,6 +831,43 @@ function toonStatus(it){
   }
 }
 
+
+/* ---------- tabel van de vorige vraag bij een grafiekopdracht ---------- */
+function toonBronTabellen(it, s, svg){
+  const vak = $('#bronTabellen'); if (!vak) return;
+  vak.innerHTML = it.bron.map(bid => {
+    const b = ITEMS.find(x => x.id === bid); if (!b) return '';
+    const bs = S.items[bid] || {}; const af = !!bs.opgelost; const w = bs.waarden || {};
+    const ys = b.ans.map((a, k) => {
+      if ((b.gegeven || []).includes(k) || af) return a;
+      const v = parseNum(w['c' + k]); return isNaN(v) ? null : v;
+    });
+    const naam = (b.nr + b.deel).replace(/\s+/g, '');
+    return `<div class="bron">
+      <div class="bron-kop">Jouw tabel van opdracht ${esc(naam)}${af ? ' ✓' : ''}</div>
+      <div class="tabel-wrap"><table class="wt bron-tabel${b.kop.every(k => k.length <= 3) ? ' kort' : ''}">
+        <tr><th>${fmtF(b.kop[0])}</th>${b.xs.map((x, k) => `<th>${String(x).replace('-', '−')}</th>`).join('')}</tr>
+        <tr><th>${fmtF(b.kop[1])}</th>${ys.map((y, k) => y == null ? '<td class="leeg">…</td>'
+          : `<td><button class="zet-uit-tabel" data-x="${b.xs[k]}" data-y="${y}" title="Zet dit punt in de grafiek" aria-label="Zet punt (${b.xs[k]}, ${y})">${String(y).replace('-', '−')}</button></td>`).join('')}</tr>
+      </table></div>
+      ${af ? '' : `<div class="bron-let">Let op: opdracht ${esc(naam)} is nog niet goed af. <button class="knop-tekst" data-ga="${esc(bid)}">Ga naar ${esc(naam)}</button></div>`}
+    </div>`;
+  }).join('') + '<div class="graf-uitleg" style="text-align:left">Tip: klik op een getal in de tabel. Dan komt dat punt in de grafiek.</div>';
+  const markeer = () => vak.querySelectorAll('.zet-uit-tabel').forEach(btn => btn.classList.toggle('gezet', (s.invoer || []).some(p => p[0] === +btn.dataset.x && p[1] === +btn.dataset.y)));
+  vak.querySelectorAll('.zet-uit-tabel').forEach(btn => btn.onclick = () => {
+    if (s.opgelost) return;
+    const x = +btn.dataset.x, y = +btn.dataset.y, g = it.g, mld = $('#puntMelding');
+    if (x < g.x[0] || x > g.x[1] || y < g.y[0] || y > g.y[1]){ if (mld) mld.textContent = 'Dat punt past niet in dit assenstelsel.'; return; }
+    svg._wissel(x, y); markeer();
+    if (mld) mld.textContent = (s.invoer.some(p => p[0] === x && p[1] === y) ? `Punt (${x}, ${y}) gezet.` : `Punt (${x}, ${y}) weggehaald.`).replace(/-/g, '−');
+  });
+  vak.querySelectorAll('[data-ga]').forEach(b => b.onclick = () => ga(ITEMS.findIndex(x => x.id === b.dataset.ga)));
+  markeer();
+  // ook bijwerken als er in de grafiek zelf geklikt wordt
+  svg.addEventListener('click', () => setTimeout(markeer, 0));
+  const zp = $('#zetPunt'); if (zp) zp.addEventListener('click', () => setTimeout(markeer, 0));
+  const wis = $('#wis'); if (wis) wis.addEventListener('click', () => setTimeout(markeer, 0));
+}
 /* ---------- nakijken ---------- */
 function controleer(it){
   const s = st(it.id); if (s.opgelost) return;
