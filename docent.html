@@ -53,7 +53,13 @@ pre{white-space:pre-wrap;background:#F1E6FA;border-radius:12px;padding:14px;font
         <label for="fNaam">Zoek</label><input id="fNaam" placeholder="naam leerling">
         <button class="licht" id="ververs">Vernieuwen</button>
         <button class="licht" id="csv">Kopieer als tabel (Excel)</button>
+        <button class="licht" id="wijzig">Wachtwoord wijzigen</button>
         <button class="licht" id="uit">Uitloggen</button>
+      </div>
+      <div id="wwVak" hidden style="background:#F1E6FA;border-radius:12px;padding:12px 14px;margin:8px 0">
+        <b>Kies een nieuw wachtwoord</b> (minstens 8 tekens)
+        <div class="rij"><input id="nieuwWw" type="password" autocomplete="new-password" style="width:240px"><input id="nieuwWw2" type="password" autocomplete="new-password" placeholder="nog een keer" style="width:240px"><button id="wwOpslaan">Opslaan</button></div>
+        <div class="melding" id="wwMelding"></div>
       </div>
       <div class="melding" id="dmelding"></div>
       <div class="tw"><table><thead><tr><th>Datum</th><th>Leerling</th><th>Klas</th><th>Cijfer</th><th>Score</th><th>Gokkans</th><th>Tip</th></tr></thead><tbody id="rijen"></tbody></table></div>
@@ -117,6 +123,16 @@ db && db.auth.onAuthStateChange(async (ev) => {
   }
 });
 $('#uit').onclick = async () => { await db.auth.signOut(); location.reload(); };
+$('#wijzig').onclick = () => { $('#wwVak').hidden = !$('#wwVak').hidden; if (!$('#wwVak').hidden) $('#nieuwWw').focus(); };
+$('#wwOpslaan').onclick = async () => {
+  const a = $('#nieuwWw').value, b = $('#nieuwWw2').value, m = $('#wwMelding');
+  if (a.length < 8){ m.style.color = 'var(--fout)'; m.textContent = 'Kies minstens 8 tekens.'; return; }
+  if (a !== b){ m.style.color = 'var(--fout)'; m.textContent = 'De twee wachtwoorden zijn niet hetzelfde.'; return; }
+  const {error} = await db.auth.updateUser({password: a});
+  if (error){ m.style.color = 'var(--fout)'; m.textContent = 'Dat lukte niet: ' + error.message; return; }
+  m.style.color = 'var(--goed)'; m.textContent = 'Je nieuwe wachtwoord is opgeslagen. Gebruik dit voortaan om in te loggen.';
+  $('#nieuwWw').value = ''; $('#nieuwWw2').value = '';
+};
 $('#ververs').onclick = laad;
 $('#fKlas').onchange = toon; $('#fNaam').oninput = toon;
 
