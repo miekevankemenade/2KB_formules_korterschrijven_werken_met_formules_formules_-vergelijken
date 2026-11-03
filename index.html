@@ -125,12 +125,16 @@ input.inv.vak{width:84px;text-align:center;font-size:20px;padding:6px 4px}
 .formulelijst{display:grid;gap:10px;font-size:24px;color:var(--paars);font-weight:600}
 .formulelijst .nr{color:var(--roze);font-weight:800;margin-right:10px}
 svg.graf{width:100%;max-width:560px;height:auto;touch-action:manipulation;user-select:none}
-main.groot{grid-template-columns:minmax(0,2.4fr) minmax(0,1fr)}
-main.groot .links{padding:12px 16px;gap:8px;justify-content:flex-start}
-main.groot svg.graf{max-width:1600px;flex:none}
-.bron-boven{width:100%;max-width:1100px;display:flex;gap:10px;flex-wrap:wrap}
-.bron-boven .bron{flex:1 1 320px;margin:0;padding:8px 10px}
-.bron-boven table.wt{max-width:none}
+main.groot{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}
+main.groot .links{padding:12px 16px;gap:6px;justify-content:center}
+main.groot svg.graf{max-width:760px;max-height:calc(100vh - 230px);max-height:calc(100dvh - 230px)}
+main.groot .links:has(.bron-boven) svg.graf{max-height:calc(100vh - 330px);max-height:calc(100dvh - 330px)}
+.bron-boven{width:100%;max-width:640px}
+.bron-boven .bron{margin:0;padding:6px 10px}
+.bron-boven .bron-kop{font-size:13px}
+.bron-boven table.wt{font-size:14px;margin:2px 0}
+.bron-boven table.wt th,.bron-boven table.wt td{padding:3px 2px}
+.links .graf-uitleg{font-size:13px}
 @media (max-width:860px){main.groot{grid-template-columns:1fr}main.groot svg.graf{max-height:none}}
 svg.graf .klik{cursor:crosshair}
 .graf-uitleg{font-size:14px;color:var(--zacht);text-align:center;max-width:520px}
