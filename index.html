@@ -43,6 +43,12 @@ main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:0
 .links,.rechts{min-height:0;overflow:auto;padding:22px max(16px,env(safe-area-inset-left)) 22px 24px}
 .links{background:var(--vlak);border-right:1px solid var(--lijn);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
 .rechts{padding-right:max(24px,env(safe-area-inset-right))}
+.lees-balk{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:4px 0 10px}
+.lees{border:2px solid var(--paars);background:#fff;color:var(--paars);border-radius:22px;padding:7px 16px;font-weight:700;cursor:pointer;font-size:15px}
+.lees.bezig{background:var(--paars);color:#fff}
+.lees-mini{border:0;background:transparent;cursor:pointer;font-size:18px;padding:0 4px;vertical-align:middle}
+.tempo{border:0;background:var(--paars-licht);color:var(--paars);border-radius:18px;padding:6px 12px;font-weight:600;cursor:pointer;font-size:13px}
+.leest{background:var(--cyaan-licht);border-radius:6px;box-shadow:0 0 0 4px var(--cyaan-licht)}
 .label-domein{display:inline-block;font-size:12px;font-weight:600;color:var(--paars);background:var(--paars-licht);border-radius:12px;padding:3px 10px;margin-bottom:10px}
 .opdr-nr{display:flex;align-items:baseline;gap:12px;margin:0 0 8px}
 .opdr-nr b{font-size:34px;font-weight:800;color:var(--roze);line-height:1}
@@ -649,6 +655,7 @@ function puntenVan(s){ if (!s.opgelost) return 0; const fouten = s.pogingen.filt
    ========================================================= */
 const app = $('#app');
 function render(){
+  stopLezen();
   if (!S.gestart) return startScherm();
   if (!S.code && db()){ S.code = nieuweCode(); bewaar(); }
   if (S.klaar) return eindScherm();
@@ -696,6 +703,7 @@ function toonTheorie(it){
    <section class="rechts">
      <span class="label-domein">Theorie</span>
      <div class="opdr-nr"><span>${esc(it.titel)}</span></div>
+     ${leesKnoppen()}
      <div class="theorie-tekst">${it.tekst.map(t => `<span class="zin">${t}</span>`).join('')}</div>
      <p>Bekijk eerst het filmpje.<br>Klik daarna op <b>Naar de opdracht</b>.</p>
    </section>`;
@@ -709,6 +717,7 @@ function toonVraag(it){
    <section class="rechts">
      <span class="label-domein">${esc(it.dom)}</span>
      <div class="opdr-nr"><b>${esc(it.nr)}</b><span>${esc(it.deel)}</span></div>
+     ${leesKnoppen()}
      <div class="blok">${zinnen(ctx.intro)}</div>
      <div class="witregel"></div>
      <div class="blok vraag">${zinnen(it.vraag)}</div>
@@ -793,7 +802,7 @@ function herstelInvoer(it, s){
   const w = s.waarden || {};
   Object.entries(w).forEach(([id, v]) => { const e = document.getElementById(id); if (e) e.value = v; });
   if (it.type === 'mk' && s.keuze) document.querySelectorAll('.optie').forEach(x => x.classList.toggle('gekozen', s.keuze.includes(+x.dataset.k)));
-  if (s.hint){ const hv = $('#hintvak'); hv.classList.add('open'); hv.innerHTML = it.hint.slice(0, s.hint).map((h, k) => `<div><b>Hint ${k + 1}:</b><br>${regels(h)}</div>`).join(''); }
+  if (s.hint){ const hv = $('#hintvak'); hv.classList.add('open'); hv.innerHTML = it.hint.slice(0, s.hint).map((h, k) => `<div><b>Hint ${k + 1}:</b> ${miniLees()}<br>${regels(h)}</div>`).join(''); }
 }
 function verzamel(it){
   const w = {}; document.querySelectorAll('#invoer input, #invoer select').forEach(e => w[e.id] = e.value); return w;
@@ -805,7 +814,7 @@ function toonStatus(it){
   if (s.opgelost){
     const p = puntenVan(s);
     fb.className = 'feedback goed';
-    fb.innerHTML = `Goed zo! Je krijgt ${p} ${p === 1 ? 'punt' : 'punten'}.<br>${it.uitleg.map(u => regels(u)).join('<br>')}`;
+    fb.innerHTML = `${miniLees()}Goed zo! Je krijgt ${p} ${p === 1 ? 'punt' : 'punten'}.<br>${it.uitleg.map(u => regels(u)).join('<br>')}`;
     document.querySelectorAll('#invoer input, #invoer select').forEach(e => { e.disabled = true; });
     $('#controleer').disabled = true; $('#hintKnop').disabled = true;
   }
@@ -908,7 +917,7 @@ function controleer(it){
   bewaar();
   const fouten = s.pogingen.filter(p => !p.goed).length;
   fb.className = 'feedback fout';
-  fb.innerHTML = `Nog niet goed.${cat ? '<br>' + fmtF(cat) + '.' : ''}<br>${fouten === 1 ? 'Kijk nog eens goed en probeer het opnieuw.' : fouten === 2 ? 'Gebruik de hint als je vastzit.' : 'Probeer het nog een keer.'}`;
+  fb.innerHTML = `${miniLees()}Nog niet goed.${cat ? '<br>' + fmtF(cat) + '.' : ''}<br>${fouten === 1 ? 'Kijk nog eens goed en probeer het opnieuw.' : fouten === 2 ? 'Gebruik de hint als je vastzit.' : 'Probeer het nog een keer.'}`;
   $('#pogingen').textContent = `Pogingen: ${s.pogingen.length}${s.hint ? ' · hint gebruikt' : ''}`;
   updateStrook();
   if (fouten >= 4 && !s.hulpGetoond){ s.hulpGetoond = true; bewaar(); toonHulp(it); }
@@ -923,7 +932,7 @@ function toonHint(it){
   const s = st(it.id); if (s.opgelost) return;
   s.hint = Math.min(it.hint.length, (s.hint || 0) + 1); bewaar();
   const hv = $('#hintvak'); hv.classList.add('open');
-  hv.innerHTML = it.hint.slice(0, s.hint).map((h, k) => `<div><b>Hint ${k + 1}:</b><br>${regels(h)}</div>`).join('')
+  hv.innerHTML = it.hint.slice(0, s.hint).map((h, k) => `<div><b>Hint ${k + 1}:</b> ${miniLees()}<br>${regels(h)}</div>`).join('')
     + (s.hint >= it.hint.length ? '' : '<div style="font-size:13px;margin-top:6px">Klik nog een keer op Hint voor meer hulp.</div>');
   $('#pogingen').textContent = `Pogingen: ${s.pogingen.length} · hint gebruikt`;
 }
@@ -1294,6 +1303,97 @@ $('#rm').addEventListener('keydown', e => {
   rm.addEventListener('pointerup', stop); rm.addEventListener('pointercancel', stop);
 })();
 rmTeken();
+
+/* =========================================================
+   VOORLEZEN (spraak van de browser)
+   ========================================================= */
+const SPRAAK = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+let leesTempo = 1; try { leesTempo = +localStorage.getItem('leesTempo') || 1; } catch (e) {}
+let stem = null, leesRij = [], leesId = 0;
+function kiesStem(){
+  if (!SPRAAK) return;
+  const v = speechSynthesis.getVoices().filter(x => /^nl/i.test(x.lang));
+  const score = x => (/nl-BE/i.test(x.lang) ? 4 : 0) + (/arnaud|online|natural|neural/i.test(x.name) ? 2 : 0) + (/google|microsoft/i.test(x.name) ? 1 : 0);
+  stem = v.sort((a, b) => score(b) - score(a))[0] || null;
+}
+if (SPRAAK){ kiesStem(); speechSynthesis.onvoiceschanged = kiesStem; }
+function leesKnoppen(){
+  if (!SPRAAK) return '';
+  return `<div class="lees-balk"><button class="lees" id="leesKnop" aria-label="Lees de opdracht voor">🔊 Lees voor</button>
+    <button class="tempo" id="tempoKnop" aria-label="Voorleessnelheid">${leesTempo < 1 ? '🐢 Langzaam' : '🐇 Normaal'}</button></div>`;
+}
+function miniLees(){ return SPRAAK ? '<button class="lees-mini" title="Lees voor" aria-label="Lees voor">🔊</button>' : ''; }
+// maak van wiskunde-tekst iets wat goed klinkt
+function uitspraak(t){
+  return String(t)
+    .replace(/🔊|🐢|🐇|💡|⧉/g, '')
+    .replace(/❶/g, ' 1 ').replace(/❷/g, ' 2 ').replace(/❸/g, ' 3 ').replace(/•/g, '')
+    .replace(/€\s*([0-9]+(?:,[0-9]+)?)(?:,-)?/g, '$1 euro')
+    .replace(/(\d+),-/g, '$1 euro')
+    .replace(/([0-9])([a-z])\b/g, '$1 $2')            // 6k -> 6 k
+    .replace(/([0-9])\(/g, '$1 keer (')                 // 4(k − 7) -> 4 keer (
+    .replace(/×/g, ' keer ').replace(/÷/g, ' gedeeld door ')
+    .replace(/(^|[\s(=+×:])[−-]\s?(?=\d|[a-z]\b)/g, '$1 min ')   // negatief getal
+    .replace(/\s[−-]\s/g, ' min ')
+    .replace(/\+/g, ' plus ').replace(/=/g, ' is ')
+    .replace(/\(/g, ' haakje ').replace(/\)/g, ' haakje ')
+    .replace(/²/g, ' kwadraat').replace(/…/g, ' puntje puntje ')
+    .replace(/\s+/g, ' ').trim();
+}
+function stopLezen(){ leesId++; if (SPRAAK) speechSynthesis.cancel(); document.querySelectorAll('.leest').forEach(e => e.classList.remove('leest')); const k = document.getElementById('leesKnop'); if (k){ k.classList.remove('bezig'); k.textContent = '🔊 Lees voor'; } }
+function leesDelen(delen){   // delen: [{el, tekst}]
+  if (!SPRAAK) return;
+  stopLezen(); const mijn = ++leesId;
+  const k = document.getElementById('leesKnop'); if (k){ k.classList.add('bezig'); k.textContent = '⏹ Stop'; }
+  let i = 0;
+  const volgende = () => {
+    if (mijn !== leesId) return;
+    document.querySelectorAll('.leest').forEach(e => e.classList.remove('leest'));
+    if (i >= delen.length){ stopLezen(); return; }
+    const d = delen[i++]; const tekst = uitspraak(d.tekst);
+    if (!tekst) return volgende();
+    if (d.el) d.el.classList.add('leest');
+    const u = new SpeechSynthesisUtterance(tekst);
+    u.lang = stem ? stem.lang : 'nl-NL'; if (stem) u.voice = stem; u.rate = leesTempo;
+    u.onend = () => setTimeout(volgende, 250); u.onerror = () => { if (mijn === leesId) stopLezen(); };
+    speechSynthesis.speak(u);
+  };
+  volgende();
+}
+// zinnen uit een stuk pagina verzamelen
+function zinDelen(root){
+  const out = [];
+  root.querySelectorAll('.zin, .formulelijst > div, table.wt, .optie').forEach(el => {
+    if (el.matches('table.wt')){
+      const rijen = [...el.rows].map(r => [...r.cells].map(c => c.querySelector('input') ? (c.querySelector('input').value || 'leeg vakje') : c.innerText.trim()));
+      out.push({el, tekst: 'Tabel. ' + rijen.map(r => r[0] + ': ' + r.slice(1).join(', ')).join('. ')});
+    } else if (el.matches('.optie')){
+      out.push({el, tekst: 'Keuze ' + (+el.dataset.k + 1) + '. ' + el.innerText});
+    } else out.push({el, tekst: el.innerText});
+  });
+  return out;
+}
+document.addEventListener('click', e => {
+  const t = e.target;
+  if (t.closest('#leesKnop')){
+    if (t.closest('#leesKnop').classList.contains('bezig')) return stopLezen();
+    const rechts = document.querySelector('.rechts');
+    const delen = [];
+    const theorie = rechts && rechts.querySelector('.theorie-tekst');
+    if (theorie) theorie.querySelectorAll('.zin').forEach(el => delen.push({el, tekst: el.innerText}));
+    else if (rechts){
+      const nr = rechts.querySelector('.opdr-nr'); if (nr) delen.push({el: null, tekst: 'Opdracht ' + nr.innerText.replace(/\s+/g, ' ')});
+      rechts.querySelectorAll('.blok').forEach(b => delen.push(...zinDelen(b)));
+      const opties = rechts.querySelector('.opties'); if (opties) delen.push(...zinDelen(opties));
+      const tab = rechts.querySelector('#invoer table.wt'); if (tab) delen.push(...zinDelen(tab.parentElement));
+      const st0 = rechts.querySelector('.stap.start'); if (st0) delen.push({el: st0, tekst: st0.innerText});
+    }
+    leesDelen(delen); return;
+  }
+  if (t.closest('#tempoKnop')){ leesTempo = leesTempo < 1 ? 1 : 0.75; try { localStorage.setItem('leesTempo', leesTempo); } catch (e) {} t.closest('#tempoKnop').textContent = leesTempo < 1 ? '🐢 Langzaam' : '🐇 Normaal'; return; }
+  const mini = t.closest('.lees-mini');
+  if (mini){ const blok = mini.parentElement; leesDelen([{el: blok, tekst: blok.innerText}]); }
+});
 
 render();
 </script>
