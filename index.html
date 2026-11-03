@@ -528,7 +528,7 @@ const SECTIES = [
    hint: ['Een negatieve tijd is een tijd vóór 9:00 uur.'], uitleg: ['tijd = 0 is 9:00 uur', 'tijd = −1 is 8:59 uur', 'tijd = −3 is drie minuten vóór negen: 8:57 uur']},
   {id: '20b', nr: '20', deel: 'b', ctx: 'c20', dom: D4, vraag: ['Vul de tabel in.', 'Gebruik de formule.'], type: 'tabel', kop: ['tijd in minuten', 'aantal liters'], xs: [-3, -2, -1, 0, 1, 2], ans: [10, 20, 30, 40, 50, 60], gegeven: [3],
    hint: ['Vul tijd = −1 in: −1 × 10 + 40 = …', '−1 × 10 = −10'], uitleg: ['tijd = −3: −3 × 10 + 40 = −30 + 40 = 10', 'tijd = −2: −20 + 40 = 20', 'tijd = −1: −10 + 40 = 30'], fouten: {}},
-  {id: '20c', nr: '20', deel: 'c', ctx: 'c20', dom: D4v, vraag: ['Teken de grafiek.', 'Gebruik de punten uit de tabellen van 19c en 20b.', 'Klik op minstens 2 punten.', 'Verkeerd punt?', 'Klik er nog een keer op.'], bron: ['19c', '20b'], type: 'grafiek', g: G20, f: t => 10 * t + 40, min: 2,
+  {id: '20c', nr: '20', deel: 'c', ctx: 'c20', dom: D4v, vraag: ['Teken de grafiek.', 'Gebruik de punten uit de tabel.', 'Klik op minstens 2 punten.', 'Verkeerd punt?', 'Klik er nog een keer op.'], bron: ['19c', '20b'], type: 'grafiek', g: G20, f: t => 10 * t + 40, min: 2,
    hint: ['Gebruik punten uit de tabellen.', 'Bijvoorbeeld (0, 40) en (2, 60).'], uitleg: ['Punt (−3, 10)', 'Punt (0, 40)', 'Punt (5, 90)', 'Trek een rechte lijn door de punten.']},
   {id: '20d', nr: '20', deel: 'd', ctx: 'c20', dom: D4v, vraag: ['Eerst was het bad leeg.', 'Hoe laat is Harm begonnen?'], type: 'tijd', ans: '8:56', graf: () => maakGrafiek(G20, {lijnen: [{f: t => 10 * t + 40}]}),
    hint: ['Het bad was leeg: aantal liters = 0.', 'Bij welke tijd raakt de grafiek de horizontale as?'], uitleg: ['Aantal liters = 0 bij tijd = −4', 'tijd = −4 is 4 minuten vóór 9:00 uur', 'Harm is om 8:56 uur begonnen.'], fouten: {'9:04': 'Negatieve tijd als ná 9:00 gelezen', '8:54': 'Afleesfout op de horizontale as'}},
@@ -828,24 +828,28 @@ function toonStatus(it){
 function toonBronTabellen(it){
   const links = $('#links'); if (!links) return;
   const vak = document.createElement('div'); vak.className = 'bron-boven'; links.prepend(vak);
-  vak.innerHTML = it.bron.map(bid => {
-    const b = ITEMS.find(x => x.id === bid); if (!b) return '';
+  // alle bron-tabellen samenvoegen tot één tabel die bij het assenstelsel hoort
+  const kol = new Map(); const nietAf = []; let kop = null;
+  it.bron.forEach(bid => {
+    const b = ITEMS.find(x => x.id === bid); if (!b) return; kop = kop || b.kop;
     const bs = S.items[bid] || {}; const af = !!bs.opgelost; const w = bs.waarden || {};
-    const ys = b.ans.map((a, k) => {
-      if ((b.gegeven || []).includes(k) || af) return a;
-      const v = parseNum(w['c' + k]); return isNaN(v) ? null : v;
+    if (!af) nietAf.push({bid, naam: (b.nr + b.deel).replace(/\s+/g, '')});
+    b.xs.forEach((x, k) => {
+      let y = null;
+      if ((b.gegeven || []).includes(k) || af) y = b.ans[k];
+      else { const v = parseNum(w['c' + k]); if (!isNaN(v)) y = v; }
+      if (!kol.has(x) || kol.get(x) == null) kol.set(x, y);
     });
-    const naam = (b.nr + b.deel).replace(/\s+/g, '');
-    return `<div class="bron">
-      <div class="bron-kop">Jouw tabel van opdracht ${esc(naam)}${af ? ' ✓' : ''}</div>
-      <div class="tabel-wrap"><table class="wt bron-tabel${b.kop.every(k => k.length <= 3) ? ' kort' : ''}">
-        <tr><th>${fmtF(b.kop[0])}</th>${b.xs.map((x, k) => `<th>${String(x).replace('-', '−')}</th>`).join('')}</tr>
-        <tr><th>${fmtF(b.kop[1])}</th>${ys.map((y, k) => y == null ? '<td class="leeg">…</td>'
-          : `<td class="gegeven">${String(y).replace('-', '−')}</td>`).join('')}</tr>
+  });
+  const xs = [...kol.keys()].sort((p, q) => p - q);
+  vak.innerHTML = `<div class="bron">
+      <div class="bron-kop">Tabel bij de grafiek</div>
+      <div class="tabel-wrap"><table class="wt bron-tabel${kop.every(k => k.length <= 3) ? ' kort' : ''}">
+        <tr><th>${fmtF(kop[0])}</th>${xs.map(x => `<th>${String(x).replace('-', '−')}</th>`).join('')}</tr>
+        <tr><th>${fmtF(kop[1])}</th>${xs.map(x => { const y = kol.get(x); return y == null ? '<td class="leeg">…</td>' : `<td class="gegeven">${String(y).replace('-', '−')}</td>`; }).join('')}</tr>
       </table></div>
-      ${af ? '' : `<div class="bron-let">Let op: opdracht ${esc(naam)} is nog niet goed af. <button class="knop-tekst" data-ga="${esc(bid)}">Ga naar ${esc(naam)}</button></div>`}
+      ${nietAf.map(n => `<div class="bron-let">Let op: opdracht ${esc(n.naam)} is nog niet goed af. <button class="knop-tekst" data-ga="${esc(n.bid)}">Ga naar ${esc(n.naam)}</button></div>`).join('')}
     </div>`;
-  }).join('');
   vak.querySelectorAll('[data-ga]').forEach(b => b.onclick = () => ga(ITEMS.findIndex(x => x.id === b.dataset.ga)));
 
 }
