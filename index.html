@@ -125,7 +125,7 @@ input.inv.vak{width:68px;text-align:center;font-size:10pt;padding:6px 4px}
 .formulelijst{display:grid;gap:6px;font-size:13pt;color:var(--paars);font-weight:600}
 .formulelijst .nr{color:var(--roze);font-weight:800;margin-right:10px}
 svg.graf{width:100%;max-width:560px;height:auto;touch-action:manipulation;user-select:none}
-main.groot{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+main.groot{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 main.groot .links{padding:12px 16px;gap:6px;justify-content:center}
 main.groot svg.graf{max-width:900px;max-height:calc(100vh - 200px);max-height:calc(100dvh - 200px)}
 main.groot .links:has(.bron-boven) svg.graf{max-height:calc(100vh - 290px);max-height:calc(100dvh - 290px)}
@@ -135,10 +135,11 @@ main.groot .links:has(.bron-boven) svg.graf{max-height:calc(100vh - 290px);max-h
 .bron-boven table.wt{font-size:14px;margin:2px 0}
 .bron-boven table.wt th,.bron-boven table.wt td{padding:3px 2px}
 .links .graf-uitleg{font-size:13px}
-main.groot.werk{grid-template-columns:minmax(0,2.6fr) minmax(0,1fr)}
+main.groot.werk{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 main.groot.werk .links{justify-content:flex-start}
 main.groot.werk svg.graf{flex:none;max-width:1500px;max-height:calc(100vh - 140px);max-height:calc(100dvh - 140px)}
 main.groot.werk .links:has(.bron-boven) svg.graf{max-height:calc(100vh - 140px);max-height:calc(100dvh - 140px)}
+@media (max-width:860px){main.groot.werk{grid-template-columns:1fr}main.groot.werk svg.graf{max-height:none}}
 @media (max-width:860px){main.groot{grid-template-columns:1fr}main.groot svg.graf{max-height:none}}
 svg.graf .klik{cursor:crosshair}
 .graf-uitleg{font-size:14px;color:var(--zacht);text-align:center;max-width:520px}
