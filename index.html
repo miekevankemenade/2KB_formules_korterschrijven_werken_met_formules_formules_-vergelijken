@@ -802,6 +802,15 @@ function toonVraag(it){
       else s.keuze = [k];
       inv.querySelectorAll('.optie').forEach(x => { const on = s.keuze.includes(+x.dataset.k); x.classList.toggle('gekozen', on); x.setAttribute('aria-pressed', on); });
     });
+    if (it.multi){
+      inv.insertAdjacentHTML('beforeend', '<button class="knop licht" id="wisKeuze" type="button">✕ Wis antwoorden</button>');
+      $('#wisKeuze').onclick = () => {
+        if (s.opgelost) return;
+        s.keuze = []; bewaar();
+        inv.querySelectorAll('.optie').forEach(x => { x.classList.remove('gekozen', 'goed', 'fout'); x.setAttribute('aria-pressed', false); });
+        const fb = $('#feedback'); if (fb && !fb.classList.contains('goed')){ fb.className = 'feedback'; fb.innerHTML = ''; }
+      };
+    }
   }
   herstelInvoer(it, s);
   $('#controleer').onclick = () => controleer(it);
@@ -830,6 +839,7 @@ function toonStatus(it){
     fb.innerHTML = `${miniLees()}Goed zo! Je krijgt ${p} ${p === 1 ? 'punt' : 'punten'}.<br>${it.uitleg.map(u => regels(u)).join('<br>')}`;
     document.querySelectorAll('#invoer input, #invoer select').forEach(e => { e.disabled = true; });
     $('#controleer').disabled = true; $('#hintKnop').disabled = true;
+    const wk = $('#wisKeuze'); if (wk) wk.disabled = true;
   }
 }
 
